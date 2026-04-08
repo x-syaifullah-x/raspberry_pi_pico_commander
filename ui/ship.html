@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Bridge Control — Dual Screw</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0b0d0f;
+            --steel: #111418;
+            --panel: #141920;
+            --panel2: #1a2030;
+            --rivet: #0e1218;
+            --border: #1e2a3a;
+            --border2: #2a3d55;
+            --border3: #344d68;
+            --text: #c5d8ee;
+            --text-dim: #4a6a8a;
+            --text-mute: #2a3d52;
+            --brass: #b8860b;
+            --brass2: #d4a017;
+            --brass-glow: rgba(212, 160, 23, 0.35);
+            --cyan: #00b4d8;
+            --cyan-dim: #006888;
+            --cyan-glow: rgba(0, 180, 216, 0.3);
+            --green: #22c55e;
+            --green-dim: #052e16;
+            --green-glow: rgba(34, 197, 94, 0.4);
+            --amber: #f59e0b;
+            --amber-dim: #431407;
+            --amber-glow: rgba(245, 158, 11, 0.4);
+            --red: #ef4444;
+            --red-dim: #3b0000;
+            --red-glow: rgba(239, 68, 68, 0.4);
+            --font-d: 'Bebas Neue', sans-serif;
+            --font-m: 'Share Tech Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-m);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 0.75rem;
+            background-image:
+                radial-gradient(ellipse 80% 40% at 50% 0%, rgba(0, 50, 80, 0.25) 0%, transparent 70%),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.03) 2px, rgba(0, 0, 0, 0.03) 4px);
+        }
+
+        /* ── TOPBAR ───────────────────────────── */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .title-block {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .ship-name {
+            font-family: var(--font-d);
+            font-size: 20px;
+            letter-spacing: 0.18em;
+            color: var(--brass2);
+            text-shadow: 0 0 16px var(--brass-glow);
+            line-height: 1;
+        }
+
+        .ship-sub {
+            font-size: 10px;
+            letter-spacing: 0.22em;
+            color: var(--text-dim);
+        }
+
+        .ws-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border2);
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .dot.on {
+            background: var(--green);
+            box-shadow: var(--green-glow) 0 0 8px;
+        }
+
+        .dot.warn {
+            background: var(--amber);
+            box-shadow: var(--amber-glow) 0 0 8px;
+        }
+
+        .ws-lbl {
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 0.08em;
+        }
+
+        /* ── LAYOUT ───────────────────────────── */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.65rem;
+        }
+
+        @media (min-width: 600px) {
+            .layout {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .card.ws {
+                grid-column: 1;
+            }
+
+            .card.sys {
+                grid-column: 2;
+            }
+
+            .card.helm {
+                grid-column: 1 / -1;
+            }
+
+            .card.adc {
+                grid-column: 1;
+            }
+
+            .card.led {
+                grid-column: 2;
+            }
+
+            .card.log {
+                grid-column: 1 / -1;
+            }
+        }
+
+        /* ── CARD ─────────────────────────────── */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.9rem 1rem;
+            position: relative;
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 4px;
+            background: repeating-linear-gradient(90deg,
+                    transparent 0px, transparent 40px,
+                    rgba(255, 255, 255, 0.005) 40px, rgba(255, 255, 255, 0.005) 41px);
+            pointer-events: none;
+        }
+
+        /* Rivet corners */
+        .card::before {
+            content: '· · · ·';
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            font-size: 8px;
+            color: var(--text-mute);
+            letter-spacing: 4px;
+            pointer-events: none;
+        }
+
+        .section-label {
+            font-family: var(--font-d);
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--text-dim);
+            margin-bottom: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-label::before {
+            content: '';
+            display: inline-block;
+            width: 2px;
+            height: 10px;
+            background: var(--brass);
+            box-shadow: 0 0 6px var(--brass-glow);
+        }
+
+        /* ── INPUTS / BUTTONS ─────────────────── */
+        input[type="text"] {
+            width: 100%;
+            padding: 6px 10px;
+            border: 1px solid var(--border2);
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: var(--font-m);
+            color: var(--text);
+            background: var(--rivet);
+            outline: none;
+            margin-bottom: 6px;
+            letter-spacing: 0.04em;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--cyan-dim);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border2);
+            border-radius: 3px;
+            background: var(--panel2);
+            color: var(--text);
+            font-size: 11px;
+            font-family: var(--font-m);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            letter-spacing: 0.06em;
+            transition: all 0.15s;
+        }
+
+        .btn:hover {
+            background: #1e2d40;
+            border-color: var(--border3);
+        }
+
+        .btn.active {
+            background: rgba(0, 119, 168, 0.18);
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: 0 0 8px var(--cyan-glow);
+        }
+
+        .btn.danger {
+            background: rgba(239, 68, 68, 0.07);
+            border-color: #5a1010;
+            color: #f87171;
+        }
+
+        .btn.danger:hover {
+            background: rgba(239, 68, 68, 0.14);
+            border-color: var(--red);
+            box-shadow: 0 0 8px var(--red-glow);
+        }
+
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-bottom: 0.6rem;
+        }
+
+        .status-lbl {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        /* ── MAIN HELM AREA ───────────────────── */
+        .helm-wrap {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── PEDAL ────────────────────────────── */
+        .pedal-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            flex: 1;
+            min-width: 120px;
+            max-width: 180px;
+        }
+
+        .pedal-title {
+            font-family: var(--font-d);
+            font-size: 13px;
+            letter-spacing: 0.2em;
+            text-align: center;
+        }
+
+        .pedal-title.port {
+            color: #f87171;
+            text-shadow: 0 0 10px var(--red-glow);
+        }
+
+        .pedal-title.stbd {
+            color: #86efac;
+            text-shadow: 0 0 10px var(--green-glow);
+        }
+
+        /* Pedal housing */
+        .pedal-housing {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            background: var(--rivet);
+            border: 1px solid var(--border2);
+            border-radius: 6px;
+            padding: 12px 10px;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Throttle track */
+        .throttle-track {
+            position: relative;
+            width: 52px;
+            height: 200px;
+            background: linear-gradient(180deg, #060a0e 0%, #0a1018 100%);
+            border: 1px solid var(--border2);
+            border-radius: 26px;
+            cursor: pointer;
+            touch-action: none;
+            user-select: none;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8), inset 0 0 3px rgba(0, 180, 216, 0.05);
+            overflow: hidden;
+        }
+
+        /* Notch lines on track */
+        .throttle-track::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            right: 6px;
+            top: 50%;
+            height: 1px;
+            background: var(--amber);
+            opacity: 0.4;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        /* Fill bar */
+        .t-fill {
+            position: absolute;
+            left: 6px;
+            right: 6px;
+            border-radius: 0;
+            transition: height 0.04s, top 0.04s;
+            z-index: 0;
+        }
+
+        .t-fill.fwd {
+            bottom: 50%;
+            background: linear-gradient(to top, var(--green), rgba(34, 197, 94, 0.3));
+            box-shadow: 0 0 8px var(--green-glow);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .t-fill.rev {
+            top: 50%;
+            background: linear-gradient(to bottom, var(--red), rgba(239, 68, 68, 0.3));
+            box-shadow: 0 0 8px var(--red-glow);
+            border-radius: 0 0 3px 3px;
+        }
+
+        /* Throttle knob/handle — looks like a real lever grip */
+        .t-knob {
+            position: absolute;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 44px;
+            height: 26px;
+            background: linear-gradient(180deg, #2e4060 0%, #1a2840 50%, #0e1a28 100%);
+            border: 1.5px solid var(--border3);
+            border-radius: 13px;
+            box-shadow:
+                0 3px 10px rgba(0, 0, 0, 0.6),
+                0 0 6px var(--cyan-glow),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            z-index: 2;
+            transition: top 0.04s;
+            /* grip lines */
+            background-image: repeating-linear-gradient(90deg,
+                    transparent 0px, transparent 5px,
+                    rgba(0, 180, 216, 0.08) 5px, rgba(0, 180, 216, 0.08) 6px);
+        }
+
+        /* Notch tick marks — 9 steps */
+        .track-ticks {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: -52px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+            padding: 13px 0;
+        }
+
+        .tick {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 1px;
+        }
+
+        .tick-line {
+            width: 6px;
+            height: 1px;
+            background: var(--border2);
+        }
+
+        .tick-label {
+            font-size: 6.5px;
+            color: var(--text-mute);
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        .tick.mid .tick-line {
+            background: var(--amber);
+            opacity: 0.6;
+            width: 10px;
+        }
+
+        .tick.mid .tick-label {
+            color: var(--amber);
+            opacity: 0.7;
+            font-size: 7px;
+        }
+
+        .tick.fwd-full .tick-line,
+        .tick.fwd-full .tick-label {
+            background: var(--green);
+            color: var(--green);
+            opacity: 0.8;
+        }
+
+        .tick.fwd-half .tick-line,
+        .tick.fwd-half .tick-label {
+            background: rgba(34, 197, 94, 0.6);
+            color: rgba(134, 239, 172, 0.7);
+            opacity: 0.7;
+        }
+
+        .tick.fwd-slow .tick-line,
+        .tick.fwd-slow .tick-label {
+            background: rgba(34, 197, 94, 0.4);
+            color: rgba(134, 239, 172, 0.55);
+            opacity: 0.6;
+        }
+
+        .tick.fwd-dead .tick-line,
+        .tick.fwd-dead .tick-label {
+            background: rgba(34, 197, 94, 0.25);
+            color: rgba(134, 239, 172, 0.4);
+            opacity: 0.5;
+        }
+
+        .tick.rev-dead .tick-line,
+        .tick.rev-dead .tick-label {
+            background: rgba(239, 68, 68, 0.25);
+            color: rgba(248, 113, 113, 0.4);
+            opacity: 0.5;
+        }
+
+        .tick.rev-slow .tick-line,
+        .tick.rev-slow .tick-label {
+            background: rgba(239, 68, 68, 0.4);
+            color: rgba(248, 113, 113, 0.55);
+            opacity: 0.6;
+        }
+
+        .tick.rev-half .tick-line,
+        .tick.rev-half .tick-label {
+            background: rgba(239, 68, 68, 0.6);
+            color: rgba(248, 113, 113, 0.7);
+            opacity: 0.7;
+        }
+
+        .tick.rev-full .tick-line,
+        .tick.rev-full .tick-label {
+            background: var(--red);
+            color: var(--red);
+            opacity: 0.8;
+        }
+
+        /* RPM gauge below pedal */
+        .rpm-gauge {
+            width: 100%;
+            background: var(--rivet);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 6px 8px;
+        }
+
+        .rpm-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .rpm-lbl {
+            font-size: 9px;
+            color: var(--text-dim);
+            letter-spacing: 0.1em;
+        }
+
+        .rpm-val {
+            font-family: var(--font-d);
+            font-size: 22px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+
+        .rpm-bar-track {
+            height: 4px;
+            background: var(--rivet);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .rpm-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.06s, background 0.2s;
+        }
+
+        .rpm-dir {
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 2px;
+            display: inline-block;
+            letter-spacing: 0.06em;
+            border: 1px solid var(--border);
+            background: var(--panel2);
+            color: var(--text-dim);
+        }
+
+        .rpm-dir.fwd {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: var(--green-dim);
+            color: var(--green);
+        }
+
+        .rpm-dir.rev {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: var(--red-dim);
+            color: var(--red);
+        }
+
+        .rpm-dir.brake {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: var(--amber-dim);
+            color: var(--amber);
+        }
+
+        /* ── CENTER PANEL ─────────────────────── */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 100px;
+            padding-top: 28px;
+        }
+
+        /* Compass rose */
+        .compass {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .compass svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 0 6px rgba(0, 100, 160, 0.3));
+        }
+
+        /* Ship silhouette indicator */
+        .ship-svg-wrap {
+            opacity: 0.5;
+        }
+
+        .ship-svg-wrap svg {
+            width: 60px;
+        }
+
+        /* STOP button — large, center */
+        .all-stop {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 35%, #4a0808, #1a0202);
+            border: 2px solid var(--red);
+            color: var(--red);
+            font-family: var(--font-d);
+            font-size: 13px;
+            letter-spacing: 0.12em;
+            cursor: pointer;
+            box-shadow: 0 0 16px var(--red-glow), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+            transition: all 0.15s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            text-shadow: 0 0 8px var(--red-glow);
+        }
+
+        .all-stop:hover {
+            background: radial-gradient(circle at 40% 35%, #6a1010, #2a0404);
+            box-shadow: 0 0 24px var(--red-glow), inset 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .all-stop:active {
+            transform: scale(0.96);
+        }
+
+        .all-stop span {
+            font-size: 9px;
+            opacity: 0.7;
+            letter-spacing: 0.08em;
+        }
+
+        /* Combined speed readout */
+        .combined-read {
+            width: 100%;
+            background: var(--rivet);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 5px 8px;
+            text-align: center;
+        }
+
+        .combined-lbl {
+            font-size: 8px;
+            color: var(--text-mute);
+            letter-spacing: 0.1em;
+            margin-bottom: 2px;
+        }
+
+        .combined-val {
+            font-family: var(--font-d);
+            font-size: 14px;
+            color: var(--cyan);
+            letter-spacing: 0.06em;
+        }
+
+        /* ── ADC ──────────────────────────────── */
+        .adc-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+        }
+
+        .adc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 6px;
+        }
+
+        .adc-cell {
+            background: var(--rivet);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 6px 8px;
+        }
+
+        .adc-cell-lbl {
+            font-size: 8px;
+            color: var(--text-mute);
+            letter-spacing: 0.1em;
+            margin-bottom: 2px;
+        }
+
+        .adc-cell-val {
+            font-family: var(--font-d);
+            font-size: 18px;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .adc-cell-sub {
+            font-size: 9px;
+            color: var(--text-dim);
+            margin-top: 2px;
+        }
+
+        /* ── LED ──────────────────────────────── */
+        .led-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 0.6rem;
+        }
+
+        .led-btn {
+            font-size: 11px;
+            padding: 7px 4px;
+        }
+
+        .led-btn.active {
+            background: rgba(245, 158, 11, 0.12);
+            border-color: var(--brass);
+            color: var(--brass2);
+            box-shadow: 0 0 8px var(--brass-glow);
+        }
+
+        .led-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border2);
+            display: inline-block;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        .led-dot.on {
+            background: var(--brass2);
+            box-shadow: 0 0 7px var(--brass-glow);
+        }
+
+        .blink-row {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .blink-row label {
+            font-size: 10px;
+            color: var(--text-dim);
+            white-space: nowrap;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--brass);
+        }
+
+        .blink-val {
+            font-size: 11px;
+            color: var(--text);
+            min-width: 24px;
+            text-align: right;
+        }
+
+        /* ── LOG ──────────────────────────────── */
+        .log-hdr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .log-hdr .section-label {
+            margin-bottom: 0;
+        }
+
+        .log-clear {
+            padding: 3px 10px;
+            font-size: 10px;
+            width: auto;
+            border-radius: 3px;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+            background: transparent;
+            font-family: var(--font-m);
+            cursor: pointer;
+        }
+
+        .log-clear:hover {
+            background: var(--panel2);
+            color: var(--text);
+        }
+
+        .log-wrap {
+            position: relative;
+        }
+
+        .log-box {
+            background: var(--rivet);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.5rem 0.75rem;
+            font-family: var(--font-m);
+            font-size: 11px;
+            color: #4a6a8a;
+            height: 120px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .log-box .ts {
+            color: #1e3040;
+        }
+
+        .log-box .tx {
+            color: var(--green);
+        }
+
+        .log-box .rx {
+            color: var(--cyan);
+        }
+
+        .log-box .info {
+            color: var(--amber);
+        }
+
+        .log-box .err {
+            color: var(--red);
+        }
+
+        .log-scroll-btn {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 3px 12px;
+            font-size: 10px;
+            width: auto;
+            border-radius: 20px;
+            background: rgba(0, 119, 168, 0.85);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-m);
+            display: none;
+            white-space: nowrap;
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--rivet);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border2);
+            border-radius: 2px;
+        }
+
+        /* pulse animation for active DMA dot */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0.5
+            }
+        }
+
+        .dot.on.pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="title-block">
+            <div class="ship-name">DUAL SCREW BRIDGE</div>
+            <div class="ship-sub">TWIN ENGINE CONTROL STATION</div>
+        </div>
+        <div class="ws-status">
+            <div class="dot" id="ws-dot"></div>
+            <span class="ws-lbl" id="ws-label">OFFLINE</span>
+        </div>
+    </div>
+
+    <div class="layout">
+
+        <!-- WS -->
+        <div class="card ws">
+            <p class="section-label">COMMS LINK</p>
+            <input type="text" id="ws-url" value="ws://localhost:8083/raspberry_pi_pico" placeholder="WebSocket URL" />
+            <input type="text" id="ws-token" value="TOKEN_A" placeholder="Auth Token" />
+            <button class="btn" id="ws-btn" onclick="toggleWS()">⚡ ESTABLISH LINK</button>
+        </div>
+
+        <!-- SYSTEM -->
+        <div class="card sys">
+            <p class="section-label">SYSTEM</p>
+            <div class="btn-row" style="margin-bottom:0.6rem;">
+                <button class="btn danger" onclick="rebootSystem(0x00)">⟳ REBOOT</button>
+                <button class="btn danger" onclick="rebootSystem(0x01)">⬆ BOOTSEL</button>
+            </div>
+            <div class="status-row">
+                <div class="dot" id="pwr-dot"></div>
+                <span class="status-lbl" id="pwr-label">DRIVE OFFLINE</span>
+            </div>
+            <button class="btn" id="pwr-btn" onclick="togglePower()">⏻ <span id="pwr-btn-label">ENGAGE
+                    DRIVE</span></button>
+        </div>
+
+        <!-- HELM — dual pedal -->
+        <div class="card helm">
+            <p class="section-label">ENGINE CONTROL — TWIN SCREW</p>
+            <div class="helm-wrap">
+
+                <!-- PORT pedal (M1) -->
+                <div class="pedal-unit">
+                    <div class="pedal-title port">PORT</div>
+                    <div class="pedal-housing">
+                        <div style="position:relative;">
+                            <div class="throttle-track" id="track-port" onpointerdown="pedalStart(event,'port')"
+                                onpointermove="pedalMove(event,'port')" onpointerup="pedalEnd(event,'port')"
+                                onpointercancel="pedalEnd(event,'port')">
+                                <div class="t-fill fwd" id="fill-port-fwd" style="height:0"></div>
+                                <div class="t-fill rev" id="fill-port-rev" style="height:0"></div>
+                                <div class="t-knob" id="knob-port" style="top:50%"></div>
+                            </div>
+                            <!-- tick marks -->
+                            <div class="track-ticks">
+                                <div class="tick fwd-full">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">FULL AHD</div>
+                                </div>
+                                <div class="tick fwd-half">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">HALF AHD</div>
+                                </div>
+                                <div class="tick fwd-slow">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">SLOW AHD</div>
+                                </div>
+                                <div class="tick fwd-dead">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">DEAD SLOW</div>
+                                </div>
+                                <div class="tick mid">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">STOP</div>
+                                </div>
+                                <div class="tick rev-dead">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">DEAD SLOW</div>
+                                </div>
+                                <div class="tick rev-slow">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">SLOW AST</div>
+                                </div>
+                                <div class="tick rev-half">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">HALF AST</div>
+                                </div>
+                                <div class="tick rev-full">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">FULL AST</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rpm-gauge">
+                        <div class="rpm-row">
+                            <span class="rpm-lbl">M1 · PORT</span>
+                            <span class="rpm-val" id="rpm-port">0<span
+                                    style="font-size:11px;opacity:0.5">%</span></span>
+                        </div>
+                        <div class="rpm-bar-track">
+                            <div class="rpm-bar-fill" id="bar-port" style="width:0%;background:var(--green)"></div>
+                        </div>
+                        <span class="rpm-dir" id="dir-port">FREE</span>
+                    </div>
+                </div>
+
+                <!-- CENTER controls -->
+                <div class="center-panel">
+                    <!-- Compass SVG -->
+                    <div class="compass">
+                        <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="40" cy="40" r="38" fill="none" stroke="#1e2a3a" stroke-width="2" />
+                            <circle cx="40" cy="40" r="30" fill="none" stroke="#1a2436" stroke-width="1"
+                                stroke-dasharray="3 6" />
+                            <!-- cardinal marks -->
+                            <text x="40" y="10" text-anchor="middle" fill="#b8860b" font-family="'Bebas Neue'"
+                                font-size="9" letter-spacing="1">N</text>
+                            <text x="40" y="76" text-anchor="middle" fill="#4a6a8a" font-family="'Bebas Neue'"
+                                font-size="9" letter-spacing="1">S</text>
+                            <text x="75" y="44" text-anchor="middle" fill="#86efac" font-family="'Bebas Neue'"
+                                font-size="9" letter-spacing="1">S</text>
+                            <text x="5" y="44" text-anchor="middle" fill="#f87171" font-family="'Bebas Neue'"
+                                font-size="9" letter-spacing="1">P</text>
+                            <!-- tick marks -->
+                            <g stroke="#1e3050" stroke-width="1">
+                                <line x1="40" y1="4" x2="40" y2="12" />
+                                <line x1="40" y1="68" x2="40" y2="76" />
+                                <line x1="4" x2="12" y1="40" y2="40" />
+                                <line x1="68" x2="76" y1="40" y2="40" />
+                            </g>
+                            <!-- center hub -->
+                            <circle cx="40" cy="40" r="5" fill="#0e1218" stroke="#2a3d55" stroke-width="1.5" />
+                            <circle cx="40" cy="40" r="2" fill="#b8860b" />
+                        </svg>
+                    </div>
+
+                    <!-- ALL STOP -->
+                    <button class="all-stop" onclick="allStop()">
+                        ALL<br>STOP
+                        <span>EMERGENCY</span>
+                    </button>
+
+                    <!-- Combined speed -->
+                    <div class="combined-read">
+                        <div class="combined-lbl">AVG THRUST</div>
+                        <div class="combined-val" id="combined-val">—</div>
+                    </div>
+
+                    <!-- Ship silhouette -->
+                    <div class="ship-svg-wrap">
+                        <svg viewBox="0 0 60 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+                            <!-- hull -->
+                            <path d="M20 80 Q10 90 30 95 Q50 90 40 80 Z" fill="#1a2a3a" stroke="#2a3d55"
+                                stroke-width="1" />
+                            <rect x="18" y="30" width="24" height="50" rx="3" fill="#111820" stroke="#1e3050"
+                                stroke-width="1" />
+                            <!-- superstructure -->
+                            <rect x="22" y="15" width="16" height="20" rx="2" fill="#0e1520" stroke="#1e2a3a"
+                                stroke-width="1" />
+                            <!-- bridge -->
+                            <rect x="25" y="8" width="10" height="10" rx="1" fill="#0a1018" stroke="#1a2436"
+                                stroke-width="1" />
+                            <!-- mast -->
+                            <line x1="30" y1="4" x2="30" y2="8" stroke="#1e3050" stroke-width="1.5" />
+                            <circle cx="30" cy="3" r="2" fill="#b8860b" opacity="0.7" />
+                            <!-- port red light -->
+                            <circle cx="18" cy="45" r="2.5" fill="#ef4444" opacity="0.6" />
+                            <!-- stbd green light -->
+                            <circle cx="42" cy="45" r="2.5" fill="#22c55e" opacity="0.6" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- STARBOARD pedal (M2) -->
+                <div class="pedal-unit">
+                    <div class="pedal-title stbd">STBD</div>
+                    <div class="pedal-housing">
+                        <div style="position:relative;">
+                            <div class="throttle-track" id="track-stbd" onpointerdown="pedalStart(event,'stbd')"
+                                onpointermove="pedalMove(event,'stbd')" onpointerup="pedalEnd(event,'stbd')"
+                                onpointercancel="pedalEnd(event,'stbd')">
+                                <div class="t-fill fwd" id="fill-stbd-fwd" style="height:0"></div>
+                                <div class="t-fill rev" id="fill-stbd-rev" style="height:0"></div>
+                                <div class="t-knob" id="knob-stbd" style="top:50%"></div>
+                            </div>
+                            <div class="track-ticks">
+                                <div class="tick fwd-full">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">FULL AHD</div>
+                                </div>
+                                <div class="tick fwd-half">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">HALF AHD</div>
+                                </div>
+                                <div class="tick fwd-slow">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">SLOW AHD</div>
+                                </div>
+                                <div class="tick fwd-dead">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">DEAD SLOW</div>
+                                </div>
+                                <div class="tick mid">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">STOP</div>
+                                </div>
+                                <div class="tick rev-dead">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">DEAD SLOW</div>
+                                </div>
+                                <div class="tick rev-slow">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">SLOW AST</div>
+                                </div>
+                                <div class="tick rev-half">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">HALF AST</div>
+                                </div>
+                                <div class="tick rev-full">
+                                    <div class="tick-line"></div>
+                                    <div class="tick-label">FULL AST</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rpm-gauge">
+                        <div class="rpm-row">
+                            <span class="rpm-lbl">M2 · STBD</span>
+                            <span class="rpm-val" id="rpm-stbd">0<span
+                                    style="font-size:11px;opacity:0.5">%</span></span>
+                        </div>
+                        <div class="rpm-bar-track">
+                            <div class="rpm-bar-fill" id="bar-stbd" style="width:0%;background:var(--green)"></div>
+                        </div>
+                        <span class="rpm-dir" id="dir-stbd">FREE</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADC -->
+        <div class="card adc">
+            <div class="adc-header">
+                <p class="section-label" style="margin:0;">SENSORS / ADC</p>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <div class="dot" id="adc-dot"></div>
+                    <span class="ws-lbl" id="adc-label">ADC DMA Stopped</span>
+                    <button class="btn" id="adc-btn" onclick="toggleADC()"
+                        style="width:auto;padding:4px 10px;font-size:10px;">▶ START</button>
+                </div>
+            </div>
+            <div class="adc-grid">
+                <div class="adc-cell">
+                    <div class="adc-cell-lbl">CH0 · GP26</div>
+                    <div class="adc-cell-val"><span id="adc-ch0">—</span></div>
+                </div>
+                <div class="adc-cell">
+                    <div class="adc-cell-lbl">CH1 · GP27</div>
+                    <div class="adc-cell-val"><span id="adc-ch1">—</span></div>
+                </div>
+                <div class="adc-cell">
+                    <div class="adc-cell-lbl">CH2 · GP28</div>
+                    <div class="adc-cell-val"><span id="adc-ch2">—</span></div>
+                </div>
+                <div class="adc-cell">
+                    <div class="adc-cell-lbl">CH4 · TEMP</div>
+                    <div class="adc-cell-val"><span id="adc-ch4">—</span></div>
+                    <div class="adc-cell-sub" id="adc-ch4-temp"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LED -->
+        <div class="card led">
+            <p class="section-label"><span class="led-dot" id="led-dot"></span>NAV LIGHT</p>
+            <div class="led-grid">
+                <button class="btn led-btn" id="led-off" onclick="setLED(0x00)">OFF</button>
+                <button class="btn led-btn" id="led-on" onclick="setLED(0x01)">ON</button>
+                <button class="btn led-btn" id="led-blink" onclick="setLED(0x02)">FLASH</button>
+            </div>
+            <div class="blink-row">
+                <label>INTERVAL</label>
+                <input type="range" id="blink-delay" min="0" max="255" value="10" oninput="updateBlinkVal()" />
+                <span class="blink-val" id="blink-val">10</span>
+            </div>
+        </div>
+
+        <!-- LOG -->
+        <div class="card log">
+            <div class="log-hdr">
+                <p class="section-label" style="margin:0;">COMMS LOG</p>
+                <button class="log-clear" onclick="clearLog()">CLEAR</button>
+            </div>
+            <div class="log-wrap">
+                <div class="log-box" id="log" onscroll="onLogScroll()"></div>
+                <button class="log-scroll-btn" id="log-scroll-btn" onclick="scrollLogToBottom()">↓ LATEST</button>
+            </div>
+        </div>
+
+    </div><!-- /layout -->
+
+    <script>
+        // ── STEPS ─────────────────────────────────────────────────
+        // Each step: { label, value } where value is signed throttle -100..100
+        // Positive = ahead, negative = astern
+        const STEPS = [
+            { label: 'FULL AHD', value: 100 },
+            { label: 'HALF AHD', value: 75 },
+            { label: 'SLOW AHD', value: 50 },
+            { label: 'DEAD SLOW', value: 25 },
+            { label: 'STOP', value: 0 },
+            { label: 'DEAD SLOW', value: -25 },
+            { label: 'SLOW AST', value: -50 },
+            { label: 'HALF AST', value: -75 },
+            { label: 'FULL AST', value: -100 },
+        ];
+
+        // Ramp speed (units/tick at 40ms) per step — slower for low steps, faster for high
+        // Dead Slow: very gradual ramp (0→25 takes ~2.5s), Full: snappy
+        function rampRate(targetAbs) {
+            if (targetAbs <= 25) return 0.4;  // dead slow — very gradual
+            if (targetAbs <= 50) return 0.8;  // slow
+            if (targetAbs <= 75) return 1.5;  // half
+            return 3.0;  // full — firm push
+        }
+
+        // ── STATE ─────────────────────────────────────────────────
+        let ws = null, powered = false, pktId = 1;
+
+        // current displayed value (float, updated by ramp)
+        const current = { port: 0, stbd: 0 };
+        // target step value
+        const target = { port: 0, stbd: 0 };
+        // dragging raw (pre-snap)
+        const rawVal = { port: 0, stbd: 0 };
+        const dragging = { port: false, stbd: false };
+
+        let sendTimer = null;  // motor packet interval
+        let rampTimer = null;  // ramp animation interval
+
+        const lastSent = [{ dir: -1, speed: -1 }, { dir: -1, speed: -1 }];
+        const dirName = { 0: 'FREE', 1: 'AHEAD', 2: 'ASTERN', 3: 'BRAKE' };
+        const dirCls = { 0: '', 1: 'fwd', 2: 'rev', 3: 'brake' };
+        const THRESH = 2;
+
+        function isConnected() { return ws && ws.readyState === 1; }
+
+        function setControlsEnabled(en) {
+            ['pwr-btn', 'led-off', 'led-on', 'led-blink', 'adc-btn'].forEach(id => {
+                document.getElementById(id).disabled = !en;
+            });
+            ['track-port', 'track-stbd'].forEach(id => {
+                const el = document.getElementById(id);
+                el.style.opacity = en ? '1' : '0.35';
+                el.style.pointerEvents = en ? '' : 'none';
+            });
+        }
+
+        // ── SNAP to nearest step ──────────────────────────────────
+        function snapToStep(val) {
+            let best = STEPS[0], bestDist = Infinity;
+            STEPS.forEach(s => {
+                const d = Math.abs(val - s.value);
+                if (d < bestDist) { bestDist = d; best = s; }
+            });
+            return best;
+        }
+
+        // ── RAMP ──────────────────────────────────────────────────
+        function startRamp() {
+            if (rampTimer) return;
+            rampTimer = setInterval(() => {
+                let anyMoving = false;
+                ['port', 'stbd'].forEach(side => {
+                    const tgt = target[side];
+                    const cur = current[side];
+                    if (cur === tgt) return;
+                    anyMoving = true;
+                    const rate = rampRate(Math.abs(tgt));
+                    const diff = tgt - cur;
+                    if (Math.abs(diff) <= rate) {
+                        current[side] = tgt;
+                    } else {
+                        current[side] = cur + Math.sign(diff) * rate;
+                    }
+                    renderPedalUI(side, false);
+                });
+                if (!anyMoving) {
+                    clearInterval(rampTimer); rampTimer = null;
+                }
+            }, 40);
+        }
+
+        // ── PEDAL DRAG ────────────────────────────────────────────
+        function pedalStart(e, side) {
+            if (!isConnected()) { addLog('Not connected', 'err'); return; }
+            if (!powered) { addLog('Drive offline', 'err'); return; }
+            document.getElementById(`track-${side}`).setPointerCapture(e.pointerId);
+            dragging[side] = true;
+            pedalMove(e, side);
+            if (!sendTimer) sendTimer = setInterval(sendMotorPackets, 80);
+        }
+
+        function pedalMove(e, side) {
+            if (!dragging[side]) return;
+            const track = document.getElementById(`track-${side}`);
+            const rect = track.getBoundingClientRect();
+            let ratio = (e.clientY - rect.top) / rect.height;
+            ratio = Math.max(0, Math.min(1, ratio));
+            // 0=top=+100% ahead, 0.5=stop, 1=bottom=-100% astern
+            rawVal[side] = Math.round((0.5 - ratio) * 200);
+            rawVal[side] = Math.max(-100, Math.min(100, rawVal[side]));
+            // During drag: show raw position without ramp for tactile feel
+            current[side] = rawVal[side];
+            renderPedalUI(side, true);
+        }
+
+        function pedalEnd(e, side) {
+            if (!dragging[side]) return;
+            dragging[side] = false;
+            // Snap to nearest step
+            const step = snapToStep(rawVal[side]);
+            target[side] = step.value;
+            addLog(`${side.toUpperCase()} → ${step.label} (${step.value > 0 ? '+' : ''}${step.value}%)`, 'info');
+            startRamp();
+            if (!dragging.port && !dragging.stbd) {
+                clearInterval(sendTimer); sendTimer = null;
+                // Keep sending during ramp
+                if (!sendTimer) sendTimer = setInterval(sendMotorPackets, 80);
+            }
+        }
+
+        // ── RENDER PEDAL ──────────────────────────────────────────
+        function renderPedalUI(side, isDragging) {
+            const v = current[side];
+            const track = document.getElementById(`track-${side}`);
+
+            // Knob position: +100→~6%, 0→50%, -100→~94%
+            const knobPct = (0.5 - v / 200) * 100;
+            const knob = document.getElementById(`knob-${side}`);
+            knob.style.top = knobPct + '%';
+            // Highlight knob during drag
+            knob.style.borderColor = isDragging ? 'var(--brass2)' : 'var(--border3)';
+            knob.style.boxShadow = isDragging
+                ? '0 3px 10px rgba(0,0,0,0.6), 0 0 10px var(--brass-glow), inset 0 1px 0 rgba(255,255,255,0.08)'
+                : '0 3px 10px rgba(0,0,0,0.6), 0 0 6px var(--cyan-glow), inset 0 1px 0 rgba(255,255,255,0.08)';
+
+            // Fill bars
+            const fillH = Math.abs(v) / 2;
+            const fFwd = document.getElementById(`fill-${side}-fwd`);
+            const fRev = document.getElementById(`fill-${side}-rev`);
+            if (v > THRESH) {
+                fFwd.style.height = fillH + '%'; fRev.style.height = '0';
+            } else if (v < -THRESH) {
+                fRev.style.height = fillH + '%'; fFwd.style.height = '0';
+            } else {
+                fFwd.style.height = '0'; fRev.style.height = '0';
+            }
+
+            // RPM gauge
+            const speed = Math.round(Math.abs(v));
+            const dir = v > THRESH ? 1 : v < -THRESH ? 2 : speed < 2 ? 0 : 3;
+            const color = dir === 1 ? 'var(--green)' : dir === 2 ? 'var(--red)' : 'var(--text-dim)';
+            document.getElementById(`rpm-${side}`).innerHTML =
+                `${speed}<span style="font-size:11px;opacity:0.5">%</span>`;
+            document.getElementById(`rpm-${side}`).style.color = speed > 0 ? color : 'var(--text)';
+            document.getElementById(`bar-${side}`).style.width = speed + '%';
+            document.getElementById(`bar-${side}`).style.background = color;
+
+            // Step label
+            const stepLabel = isDragging ? snapToStep(v).label : snapToStep(target[side]).label;
+            document.getElementById(`dir-${side}`).textContent = stepLabel;
+            document.getElementById(`dir-${side}`).className = 'rpm-dir ' + dirCls[dir];
+
+            // Highlight active tick
+            const activeStep = snapToStep(isDragging ? v : target[side]);
+            const cls = tickClass(activeStep.value);
+            document.querySelectorAll(`#track-${side}`).forEach(() => { }); // no-op placeholder
+            highlightTick(side, cls);
+
+            // Combined
+            updateCombined();
+        }
+
+        function tickClass(val) {
+            const map = {
+                100: 'fwd-full', 75: 'fwd-half', 50: 'fwd-slow', 25: 'fwd-dead',
+                0: 'mid', '-25': 'rev-dead', '-50': 'rev-slow', '-75': 'rev-half', '-100': 'rev-full'
+            };
+            return map[String(val)] || 'mid';
+        }
+
+        function highlightTick(side, activeClass) {
+            // Find the tick container for this side
+            const housing = document.getElementById(`track-${side}`).closest('.pedal-housing');
+            if (!housing) return;
+            housing.querySelectorAll('.tick').forEach(t => {
+                t.style.opacity = '';
+                t.querySelector('.tick-line').style.width = '';
+            });
+            const active = housing.querySelector(`.tick.${activeClass}`);
+            if (active) {
+                active.style.opacity = '1';
+                const line = active.querySelector('.tick-line');
+                if (line) line.style.width = '12px';
+            }
+        }
+
+        function updateCombined() {
+            const pv = current.port, sv = current.stbd;
+            const pDir = pv > THRESH ? 'AHD' : pv < -THRESH ? 'AST' : 'STP';
+            const sDir = sv > THRESH ? 'AHD' : sv < -THRESH ? 'AST' : 'STP';
+            const avg = Math.round((Math.abs(pv) + Math.abs(sv)) / 2);
+            document.getElementById('combined-val').textContent =
+                avg > 0 ? `P:${pDir} ${Math.round(Math.abs(pv))}% · S:${sDir} ${Math.round(Math.abs(sv))}%` : '— STOPPED —';
+        }
+
+        // ── MOTOR PACKETS ─────────────────────────────────────────
+        function getMotorState(side) {
+            const v = current[side];
+            const speed = Math.round(Math.abs(v));
+            const dir = v > THRESH ? 1 : v < -THRESH ? 2 : speed < 2 ? 0 : 3;
+            return { speed, dir };
+        }
+
+        function sendMotorPackets() {
+            if (!isConnected()) return;
+            const m1 = getMotorState('port');
+            const m2 = getMotorState('stbd');
+            if (m1.dir !== lastSent[0].dir || m1.speed !== lastSent[0].speed) {
+                ws.send(new Uint8Array([pktId & 0xFF, 62, 0x01, m1.dir, m1.speed]).buffer);
+                lastSent[0].dir = m1.dir; lastSent[0].speed = m1.speed;
+            }
+            if (m2.dir !== lastSent[1].dir || m2.speed !== lastSent[1].speed) {
+                ws.send(new Uint8Array([pktId & 0xFF, 62, 0x02, m2.dir, m2.speed]).buffer);
+                lastSent[1].dir = m2.dir; lastSent[1].speed = m2.speed;
+            }
+            // Stop send timer once ramp finished and dragging done
+            const m1done = m1.speed === Math.round(Math.abs(target.port));
+            const m2done = m2.speed === Math.round(Math.abs(target.stbd));
+            if (m1done && m2done && !dragging.port && !dragging.stbd) {
+                clearInterval(sendTimer); sendTimer = null;
+            }
+        }
+
+        // ── ALL STOP ──────────────────────────────────────────────
+        function allStop() {
+            if (!isConnected()) { addLog('Not connected', 'err'); return; }
+            target.port = 0; target.stbd = 0;
+            startRamp();
+            lastSent[0].dir = -1; lastSent[1].dir = -1;
+            if (!sendTimer) sendTimer = setInterval(sendMotorPackets, 80);
+            addLog('ALL STOP', 'info');
+        }
+
+        // ── POWER ─────────────────────────────────────────────────
+        function togglePower() {
+            if (!isConnected()) { addLog('Not connected', 'err'); return; }
+            powered = !powered;
+            document.getElementById('pwr-dot').className = 'dot' + (powered ? ' on' : '');
+            document.getElementById('pwr-label').textContent = powered ? 'DRIVE ONLINE' : 'DRIVE OFFLINE';
+            document.getElementById('pwr-btn').className = 'btn' + (powered ? ' active' : '');
+            document.getElementById('pwr-btn-label').textContent = powered ? 'DISENGAGE DRIVE' : 'ENGAGE DRIVE';
+            ws.send(new Uint8Array([pktId & 0xFF, 61, powered ? 0x01 : 0x00]).buffer);
+            addLog('TX DRIVE ' + (powered ? 'ONLINE' : 'OFFLINE'), 'tx');
+        }
+
+        // ── REBOOT ────────────────────────────────────────────────
+        function rebootSystem(mode) {
+            if (!isConnected()) { addLog('Not connected', 'err'); return; }
+            const name = mode === 0x00 ? 'NORMAL' : 'BOOTSEL';
+            if (!confirm(`Reboot — ${name} mode?`)) return;
+            ws.send(new Uint8Array([pktId & 0xFF, 1, mode]).buffer);
+            addLog(`TX REBOOT → ${name}`, 'tx'); pktId++;
+        }
+
+        // ── WEBSOCKET ─────────────────────────────────────────────
+        function toggleWS() {
+            if (ws && ws.readyState === 1) { ws.close(); return; }
+            connectWS();
+        }
+
+        function connectWS() {
+            const url = document.getElementById('ws-url').value.trim();
+            const token = document.getElementById('ws-token').value.trim();
+            if (ws) { ws.close(); ws = null; }
+            try {
+                ws = new WebSocket(url);
+                ws.binaryType = 'arraybuffer';
+                ws.onopen = () => {
+                    ws.send(JSON.stringify({ token }));
+                    document.getElementById('ws-dot').className = 'dot on';
+                    document.getElementById('ws-label').textContent = 'ONLINE';
+                    document.getElementById('ws-btn').textContent = '✕ CLOSE LINK';
+                    document.getElementById('ws-btn').className = 'btn active';
+                    setControlsEnabled(true);
+                    addLog('Link established', 'info');
+                };
+                ws.onclose = () => {
+                    document.getElementById('ws-dot').className = 'dot';
+                    document.getElementById('ws-label').textContent = 'OFFLINE';
+                    document.getElementById('ws-btn').textContent = '⚡ ESTABLISH LINK';
+                    document.getElementById('ws-btn').className = 'btn';
+                    setControlsEnabled(false);
+                    lastSent[0].dir = -1; lastSent[0].speed = -1;
+                    lastSent[1].dir = -1; lastSent[1].speed = -1;
+                    if (sendTimer) { clearInterval(sendTimer); sendTimer = null; }
+                    adcDmaActive = false;
+                    resetAdcChannels();
+                    document.getElementById('adc-dot').className = 'dot';
+                    document.getElementById('adc-label').textContent = 'ADC DMA Stopped';
+                    document.getElementById('adc-btn').textContent = '▶ START';
+                    document.getElementById('adc-btn').className = 'btn';
+                    addLog('Link lost', 'err');
+                };
+                ws.onmessage = (e) => {
+                    try {
+                        const txt = typeof e.data === 'string' ? e.data : new TextDecoder().decode(e.data);
+                        const msg = JSON.parse(txt);
+                        applyState(msg);
+                        addLog('RX ' + txt, 'rx');
+                    } catch { addLog('RX raw', 'rx'); }
+                };
+                ws.onerror = () => addLog('WS error', 'err');
+            } catch (err) { addLog('ERR: ' + err.message, 'err'); }
+        }
+
+        // ── APPLY STATE ───────────────────────────────────────────
+        function applyStateLed(led) {
+            const mode = led.status;
+            ['led-off', 'led-on', 'led-blink'].forEach(id => document.getElementById(id).className = 'btn led-btn');
+            document.getElementById(mode === 0 ? 'led-off' : mode === 1 ? 'led-on' : 'led-blink').className = 'btn led-btn active';
+            document.getElementById('led-dot').className = 'led-dot' + (mode >= 1 ? ' on' : '');
+        }
+
+        function applyStateTB6612FNG(tb) {
+            powered = tb.power === true;
+            document.getElementById('pwr-dot').className = 'dot' + (powered ? ' on' : '');
+            document.getElementById('pwr-label').textContent = powered ? 'DRIVE ONLINE' : 'DRIVE OFFLINE';
+            document.getElementById('pwr-btn').className = 'btn' + (powered ? ' active' : '');
+            document.getElementById('pwr-btn-label').textContent = powered ? 'DISENGAGE DRIVE' : 'ENGAGE DRIVE';
+        }
+
+        // ── ADC ───────────────────────────────────────────────────
+        let adcDmaActive = false;
+
+        function resetAdcChannels() {
+            [0, 1, 2, 4].forEach(i => document.getElementById(`adc-ch${i}`).textContent = '—');
+            document.getElementById('adc-ch4-temp').textContent = '';
+        }
+
+        function setAdcDmaUI(active) {
+            adcDmaActive = active;
+            document.getElementById('adc-dot').className = 'dot' + (active ? ' on pulse' : '');
+            document.getElementById('adc-label').textContent = active ? 'ADC DMA Running' : 'ADC DMA Stopped';
+            document.getElementById('adc-btn').textContent = active ? '■ STOP' : '▶ START';
+            document.getElementById('adc-btn').className = 'btn' + (active ? ' active' : '');
+            if (!active) resetAdcChannels();
+        }
+
+        function toggleADC() {
+            if (!isConnected()) { addLog('Not connected', 'err'); return; }
+            const next = !adcDmaActive;
+            ws.send(new Uint8Array([pktId & 0xFF, 41, next ? 1 : 0]).buffer);
+            addLog(`TX ADC DMA ${next ? 'START' : 'STOP'}`, 'tx'); pktId++;
+            if (!next) { adcDmaActive = false; resetAdcChannels(); }
+        }
+
+        function applyStateADC(data) {
+            if (!adcDmaActive) return;
+            const ch = data.input;
+            if (ch === 4) {
+                document.getElementById('adc-ch4').textContent = data.voltage.toFixed(3) + 'V';
+                document.getElementById('adc-ch4-temp').textContent = data.temp !== undefined ? data.temp.toFixed(1) + '°C' : '';
+            } else if ([0, 1, 2].includes(ch)) {
+                document.getElementById(`adc-ch${ch}`).textContent = data.voltage.toFixed(3) + 'V';
+            }
+        }
+
+        function applyState(msg) {
+            switch (msg.event) {
+                case 0:
+                    applyStateLed(msg.data.led);
+                    applyStateTB6612FNG(msg.data.tb_6612_fng);
+                    if (msg.data.adc_dma) setAdcDmaUI(msg.data.adc_dma.state === true);
+                    if (msg.data.adc) Object.values(msg.data.adc).forEach(ch => applyStateADC(ch));
+                    break;
+                case 2: applyStateLed(msg.data); break;
+                case 3:
+                case 42: applyStateADC(msg.data); break;
+                case 4: applyStateTB6612FNG(msg.data); break;
+                case 41: setAdcDmaUI(msg.data.state === true); break;
+            }
+        }
+
+        // ── LED ───────────────────────────────────────────────────
+        let ledMode = 0;
+        function updateBlinkVal() { document.getElementById('blink-val').textContent = document.getElementById('blink-delay').value; }
+        function setLED(mode) {
+            if (!isConnected()) { addLog('Not connected', 'err'); return; }
+            ledMode = mode;
+            const delay = mode === 0x02 ? parseInt(document.getElementById('blink-delay').value) : 0;
+            ['led-off', 'led-on', 'led-blink'].forEach(id => document.getElementById(id).className = 'btn led-btn');
+            document.getElementById(mode === 0 ? 'led-off' : mode === 1 ? 'led-on' : 'led-blink').className = 'btn led-btn active';
+            document.getElementById('led-dot').className = 'led-dot' + (mode >= 1 ? ' on' : '');
+            ws.send(new Uint8Array([pktId & 0xFF, 21, mode, delay]).buffer);
+            addLog(`TX LED ${mode === 0 ? 'OFF' : mode === 1 ? 'ON' : `FLASH delay=${delay}`}`, 'tx'); pktId++;
+        }
+
+        // ── LOG ───────────────────────────────────────────────────
+        function isLogAtBottom() {
+            const l = document.getElementById('log');
+            return l.scrollHeight - l.scrollTop - l.clientHeight < 4;
+        }
+        function onLogScroll() {
+            document.getElementById('log-scroll-btn').style.display = isLogAtBottom() ? 'none' : 'block';
+        }
+        function scrollLogToBottom() {
+            const l = document.getElementById('log');
+            l.scrollTop = l.scrollHeight;
+            document.getElementById('log-scroll-btn').style.display = 'none';
+        }
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            document.getElementById('log-scroll-btn').style.display = 'none';
+        }
+        function addLog(msg, type = 'info') {
+            const log = document.getElementById('log');
+            const atBot = isLogAtBottom();
+            const el = document.createElement('div');
+            const t = new Date().toLocaleTimeString('en', { hour12: false });
+            el.innerHTML = `<span class="ts">[${t}]</span> <span class="${type}">${msg}</span>`;
+            log.appendChild(el);
+            if (log.children.length > 200) log.removeChild(log.firstChild);
+            if (atBot) { log.scrollTop = log.scrollHeight; document.getElementById('log-scroll-btn').style.display = 'none'; }
+            else { document.getElementById('log-scroll-btn').style.display = 'block'; }
+        }
+
+        // ── INIT ──────────────────────────────────────────────────
+        setControlsEnabled(false);
+        renderPedalUI('port', false);
+        renderPedalUI('stbd', false);
+    </script>
+</body>
+
+</html>

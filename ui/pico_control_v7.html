@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Pico Control</title>
+  <style>
+    :root {
+      --bg: #f5f5f0;
+      --bg-card: #fff;
+      --bg-inner: #f8f8f5;
+      --bg-joy: #f0efe8;
+      --border: #ddd;
+      --border-inner: #eee;
+      --text: #1a1a1a;
+      --text-muted: #888;
+      --text-sub: #666;
+      --btn-bg: #fff;
+      --btn-hover: #f5f5f0;
+      --input-bg: #fafafa;
+      --input-focus: #fff;
+      --active-bg: #eaf3de;
+      --active-border: #52a84a;
+      --active-color: #2d6e25;
+      --led-active-bg: #fef9e0;
+      --led-active-border: #c9a800;
+      --led-active-color: #7a6000;
+      --badge-bg: #e8f0fb;
+      --badge-color: #2d5fa8;
+      --log-bg: #1a1a1a;
+      --log-ts: #555;
+      --danger-bg: #fdf0ee;
+      --danger-border: #c0392b;
+      --danger-color: #c0392b;
+      --danger-hover: #fad7d2;
+    }
+
+    @media(prefers-color-scheme:dark) {
+      :root {
+        --bg: #111110;
+        --bg-card: #1c1c1a;
+        --bg-inner: #252522;
+        --bg-joy: #252522;
+        --border: #333;
+        --border-inner: #2e2e2b;
+        --text: #e8e8e4;
+        --text-muted: #666;
+        --text-sub: #888;
+        --btn-bg: #1c1c1a;
+        --btn-hover: #252522;
+        --input-bg: #252522;
+        --input-focus: #2e2e2b;
+        --active-bg: #1a2e14;
+        --active-border: #52a84a;
+        --active-color: #7ec87e;
+        --led-active-bg: #2e2600;
+        --led-active-border: #c9a800;
+        --led-active-color: #f5c400;
+        --badge-bg: #1a2340;
+        --badge-color: #7eb8e8;
+        --log-bg: #0d0d0c;
+        --log-ts: #444;
+        --danger-bg: #2e1414;
+        --danger-border: #c0392b;
+        --danger-color: #e87e7e;
+        --danger-hover: #3e1a1a;
+      }
+    }
+
+    [data-theme="light"] {
+      --bg: #f5f5f0;
+      --bg-card: #fff;
+      --bg-inner: #f8f8f5;
+      --bg-joy: #f0efe8;
+      --border: #ddd;
+      --border-inner: #eee;
+      --text: #1a1a1a;
+      --text-muted: #888;
+      --text-sub: #666;
+      --btn-bg: #fff;
+      --btn-hover: #f5f5f0;
+      --input-bg: #fafafa;
+      --input-focus: #fff;
+      --active-bg: #eaf3de;
+      --active-border: #52a84a;
+      --active-color: #2d6e25;
+      --led-active-bg: #fef9e0;
+      --led-active-border: #c9a800;
+      --led-active-color: #7a6000;
+      --badge-bg: #e8f0fb;
+      --badge-color: #2d5fa8;
+      --log-bg: #1a1a1a;
+      --log-ts: #555;
+      --danger-bg: #fdf0ee;
+      --danger-border: #c0392b;
+      --danger-color: #c0392b;
+      --danger-hover: #fad7d2;
+    }
+
+    [data-theme="dark"] {
+      --bg: #111110;
+      --bg-card: #1c1c1a;
+      --bg-inner: #252522;
+      --bg-joy: #252522;
+      --border: #333;
+      --border-inner: #2e2e2b;
+      --text: #e8e8e4;
+      --text-muted: #666;
+      --text-sub: #888;
+      --btn-bg: #1c1c1a;
+      --btn-hover: #252522;
+      --input-bg: #252522;
+      --input-focus: #2e2e2b;
+      --active-bg: #1a2e14;
+      --active-border: #52a84a;
+      --active-color: #7ec87e;
+      --led-active-bg: #2e2600;
+      --led-active-border: #c9a800;
+      --led-active-color: #f5c400;
+      --badge-bg: #1a2340;
+      --badge-color: #7eb8e8;
+      --log-bg: #0d0d0c;
+      --log-ts: #444;
+      --danger-bg: #2e1414;
+      --danger-border: #c0392b;
+      --danger-color: #e87e7e;
+      --danger-hover: #3e1a1a;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      gap: 8px;
+    }
+
+    h1 {
+      font-size: 17px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .theme-btn {
+      flex-shrink: 0;
+      width: auto;
+      padding: 6px 12px;
+      font-size: 13px;
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .theme-btn:hover {
+      background: var(--btn-hover);
+    }
+
+    /* Mobile-first layout with order control */
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 0.5px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.125rem;
+    }
+
+    /* Order for mobile: WebSocket -> System -> Power -> rest */
+    .card.ws {
+      order: 1;
+    }
+
+    .card.system {
+      order: 2;
+    }
+
+    .card.power {
+      order: 3;
+    }
+
+    .card.analog {
+      order: 4;
+    }
+
+    .card.adc {
+      order: 5;
+    }
+
+    .card.led {
+      order: 6;
+    }
+
+    .card.log {
+      order: 7;
+    }
+
+    /* Desktop: 2-column for top cards */
+    @media(min-width:640px) {
+      .top-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .top-grid .card {
+        margin: 0;
+      }
+
+      .card.ws {
+        order: 1;
+        grid-column: 1;
+      }
+
+      .card.system {
+        order: 2;
+        grid-column: 2;
+        grid-row: 1;
+      }
+
+      .card.power {
+        order: 3;
+        grid-column: 1;
+        grid-row: 2;
+      }
+    }
+
+    .card-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 0.65rem;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+
+    .dot.on {
+      background: #52a84a;
+    }
+
+    .status-label {
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 7px 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--input-bg);
+      outline: none;
+      margin-bottom: 7px;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      border-color: var(--active-border);
+      background: var(--input-focus);
+    }
+
+    button {
+      width: 100%;
+      padding: 9px;
+      border: 0.5px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn-bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: background 0.15s;
+    }
+
+    button:hover {
+      background: var(--btn-hover);
+    }
+
+    button.active {
+      background: var(--active-bg);
+      border-color: var(--active-border);
+      color: var(--active-color);
+    }
+
+    button.danger {
+      background: var(--danger-bg);
+      border-color: var(--danger-border);
+      color: var(--danger-color);
+    }
+
+    button.danger:hover {
+      background: var(--danger-hover);
+    }
+
+    /* Analog control — joystick layout responds to card width */
+    .gamepad {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .joy-side {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .joy-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .joy-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    /* Joystick scales with viewport using clamp */
+    .joystick-area {
+      position: relative;
+      border-radius: 50%;
+      background: var(--bg-joy);
+      border: 1.5px solid var(--border);
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+      width: clamp(90px, 18vw, 120px);
+      height: clamp(90px, 18vw, 120px);
+    }
+
+    .joystick-area:active {
+      cursor: grabbing;
+    }
+
+    .joy-ring {
+      position: absolute;
+      width: 73%;
+      height: 73%;
+      border-radius: 50%;
+      border: 1px dashed var(--border-inner);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .joystick-knob {
+      position: absolute;
+      width: 37%;
+      height: 37%;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1.5px solid var(--active-border);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .joystick-center {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--border);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .motor-card {
+      background: var(--bg-inner);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+      border: 0.5px solid var(--border-inner);
+      width: 100%;
+      margin-top: 0.6rem;
+    }
+
+    .motor-card .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+    }
+
+    .motor-card .speed {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .motor-card .dir {
+      display: inline-block;
+      margin-top: 3px;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--badge-bg);
+      color: var(--badge-color);
+    }
+
+    .motor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      width: 100%;
+    }
+
+    /* LED */
+    .led-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 0.65rem;
+    }
+
+    .led-btn {
+      padding: 9px 6px;
+      font-size: 13px;
+    }
+
+    .led-btn.active {
+      background: var(--led-active-bg);
+      border-color: var(--led-active-border);
+      color: var(--led-active-color);
+    }
+
+    .blink-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .blink-row label {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #52a84a;
+    }
+
+    .blink-val {
+      font-size: 12px;
+      color: var(--text);
+      min-width: 28px;
+      text-align: right;
+    }
+
+    .led-indicator {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--border);
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .led-indicator.on {
+      background: #f5c400;
+      box-shadow: 0 0 6px #f5c400;
+    }
+
+    /* Reboot buttons */
+    .reboot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .reboot-btn {
+      padding: 9px 6px;
+      font-size: 12px;
+    }
+
+    /* Log */
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.6rem;
+    }
+
+    .log-header .card-title {
+      margin-bottom: 0;
+    }
+
+    .log-clear-btn {
+      padding: 3px 10px;
+      font-size: 11px;
+      width: auto;
+      border-radius: 6px;
+      color: var(--text-muted);
+      border: 0.5px solid var(--border);
+      background: transparent;
+    }
+
+    .log-clear-btn:hover {
+      background: var(--btn-hover);
+      color: var(--text);
+    }
+
+    .log-wrap {
+      position: relative;
+    }
+
+    .log-box {
+      background: var(--log-bg);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      color: #aaa;
+      height: 130px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .log-box .ts {
+      color: var(--log-ts);
+    }
+
+    .log-box .tx {
+      color: #7ec87e;
+    }
+
+    .log-box .rx {
+      color: #7eb8e8;
+    }
+
+    .log-box .info {
+      color: #e8c87e;
+    }
+
+    .log-box .err {
+      color: #e87e7e;
+    }
+
+    .log-scroll-btn {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 14px;
+      font-size: 11px;
+      width: auto;
+      border-radius: 20px;
+      background: rgba(82, 168, 74, 0.9);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: none;
+      white-space: nowrap;
+    }
+
+    .log-scroll-btn:hover {
+      background: rgba(60, 130, 54, 0.95);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="topbar">
+    <h1>Pico Control Panel</h1>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+
+  <div class="container">
+    <!-- WebSocket (order:1) -->
+    <div class="card ws">
+      <p class="card-title">WebSocket</p>
+      <div class="status-row">
+        <div class="dot" id="ws-dot"></div><span class="status-label" id="ws-label">Disconnected</span>
+      </div>
+      <input type="text" id="ws-url" value="ws://localhost:8083/raspberry_pi_pico" placeholder="WebSocket URL" />
+      <input type="text" id="ws-token" value="TOKEN_A" placeholder="Token" />
+      <button id="ws-btn" onclick="toggleWS()">⚡ Connect</button>
+    </div>
+
+    <!-- System Control (order:2) -->
+    <div class="card system">
+      <p class="card-title">System Control</p>
+      <div class="reboot-grid">
+        <button class="reboot-btn danger" onclick="rebootSystem(0x00)">🔄 Reboot</button>
+        <button class="reboot-btn danger" onclick="rebootSystem(0x01)">🔧 Bootsel</button>
+      </div>
+    </div>
+
+    <!-- Driver Power (order:3) -->
+    <div class="card power">
+      <p class="card-title">Driver power</p>
+      <div class="status-row">
+        <div class="dot" id="pwr-dot"></div><span class="status-label" id="pwr-label">Off</span>
+      </div>
+      <button id="pwr-btn" onclick="togglePower()">⏻ <span id="pwr-btn-label">Turn on</span></button>
+    </div>
+
+    <!-- Analog control (order:4) -->
+    <div class="card analog">
+      <p class="card-title">Analog control</p>
+      <div class="gamepad">
+        <div class="joy-side">
+          <div class="joy-label">Motor 1</div>
+          <div class="joystick-area" id="joy1" onpointerdown="joyStart(event,1)" onpointermove="joyMove(event,1)"
+            onpointerup="joyEnd(event,1)" onpointercancel="joyEnd(event,1)">
+            <div class="joy-ring"></div>
+            <div class="joystick-knob" id="knob1"></div>
+            <div class="joystick-center"></div>
+          </div>
+          <div class="motor-card">
+            <div class="joy-stat"><span class="label">Speed</span><span class="speed" id="m1-speed">0%</span></div>
+            <span class="dir" id="m1-dir">Free</span>
+          </div>
+        </div>
+        <div class="joy-side">
+          <div class="joy-label">Both</div>
+          <div class="joystick-area" id="joy3" onpointerdown="joyStart(event,3)" onpointermove="joyMove(event,3)"
+            onpointerup="joyEnd(event,3)" onpointercancel="joyEnd(event,3)">
+            <div class="joy-ring"></div>
+            <div class="joystick-knob" id="knob3" style="border-color:#c9a800;"></div>
+            <div class="joystick-center"></div>
+          </div>
+          <div class="motor-card">
+            <div class="joy-stat"><span class="label">Mode</span><span class="speed" style="font-size:13px;"
+                id="j3-mode">—</span></div>
+            <span class="dir" id="j3-info">—</span>
+          </div>
+        </div>
+        <div class="joy-side">
+          <div class="joy-label">Motor 2</div>
+          <div class="joystick-area" id="joy2" onpointerdown="joyStart(event,2)" onpointermove="joyMove(event,2)"
+            onpointerup="joyEnd(event,2)" onpointercancel="joyEnd(event,2)">
+            <div class="joy-ring"></div>
+            <div class="joystick-knob" id="knob2"></div>
+            <div class="joystick-center"></div>
+          </div>
+          <div class="motor-card">
+            <div class="joy-stat"><span class="label">Speed</span><span class="speed" id="m2-speed">0%</span></div>
+            <span class="dir" id="m2-dir">Free</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADC (order:5) -->
+    <div class="card adc">
+      <p class="card-title">ADC</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.65rem;">
+        <div class="status-row" style="margin:0;">
+          <div class="dot" id="adc-dot"></div>
+          <span class="status-label" id="adc-label">ADC DMA Stopped</span>
+        </div>
+        <button id="adc-btn" onclick="toggleADC()" style="width:auto;padding:6px 14px;font-size:12px;">▶ Start</button>
+      </div>
+      <div class="motor-grid" id="adc-vals">
+        <div class="motor-card">
+          <div class="label">CH0 · GPIO26</div>
+          <div class="speed"><span id="adc-ch0">—</span></div>
+        </div>
+        <div class="motor-card">
+          <div class="label">CH1 · GPIO27</div>
+          <div class="speed"><span id="adc-ch1">—</span></div>
+        </div>
+        <div class="motor-card">
+          <div class="label">CH2 · GPIO28</div>
+          <div class="speed"><span id="adc-ch2">—</span></div>
+        </div>
+        <div class="motor-card">
+          <div class="label">CH4 · Temp</div>
+          <div class="speed"><span id="adc-ch4">—</span></div><span class="dir" id="adc-ch4-temp"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LED (order:6) -->
+    <div class="card led">
+      <p class="card-title"><span class="led-indicator" id="led-indicator"></span>Default LED</p>
+      <div class="led-grid">
+        <button class="led-btn" id="led-off" onclick="setLED(0x00)">OFF</button>
+        <button class="led-btn" id="led-on" onclick="setLED(0x01)">ON</button>
+        <button class="led-btn" id="led-blink" onclick="setLED(0x02)">Blink</button>
+      </div>
+      <div class="blink-row">
+        <label>Blink delay</label>
+        <input type="range" id="blink-delay" min="0" max="255" value="10" oninput="updateBlinkVal()" />
+        <span class="blink-val" id="blink-val">10</span>
+      </div>
+    </div>
+
+    <!-- Log (order:7) -->
+    <div class="card log">
+      <div class="log-header">
+        <p class="card-title" style="margin:0;">Packet log</p>
+        <button class="log-clear-btn" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="log-wrap">
+        <div class="log-box" id="log" onscroll="onLogScroll()"></div>
+        <button class="log-scroll-btn" id="log-scroll-btn" onclick="scrollLogToBottom()">↓ Latest</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let ws = null, powered = false, pktId = 1, sendInterval = null;
+    let joyX = [0, 0, 0], joyY = [0, 0, 0], joyActive = [false, false, false];
+    const JR = 60, JK = 22, MAX_R = JR - JK;
+
+    const joys = [document.getElementById('joy1'), document.getElementById('joy2'), document.getElementById('joy3')];
+    const knobs = [document.getElementById('knob1'), document.getElementById('knob2'), document.getElementById('knob3')];
+
+    function isConnected() { return ws && ws.readyState === 1; }
+
+    function setControlsEnabled(en) {
+      ['pwr-btn', 'led-off', 'led-on', 'led-blink', 'adc-btn'].forEach(id => document.getElementById(id).disabled = !en);
+      joys.forEach(j => { j.style.opacity = en ? '1' : '0.4'; j.style.pointerEvents = en ? '' : 'none'; });
+    }
+
+    function joyStart(e, idx) {
+      if (!isConnected()) { addLog('Not connected', 'err'); return; }
+      if (!powered) { addLog('Power is off', 'err'); return; }
+      joys[idx - 1].setPointerCapture(e.pointerId);
+      joyActive[idx - 1] = true;
+      joyMove(e, idx);
+      if (!sendInterval)
+        sendInterval = setInterval(sendMotorPackets, 80);
+    }
+
+    function joyMove(e, idx) {
+      const i = idx - 1;
+      if (!joyActive[i]) return;
+      const el = joys[i];
+      const rect = el.getBoundingClientRect();
+      const r = rect.width / 2;
+      const knobR = rect.width * 0.185;
+      const maxR = r - knobR;
+      const cx = rect.left + r, cy = rect.top + r;
+      let dx = e.clientX - cx, dy = e.clientY - cy;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > maxR) { dx *= maxR / dist; dy *= maxR / dist; }
+      joyX[i] = dx / maxR;
+      joyY[i] = dy / maxR;
+      knobs[i].style.left = (r + dx) + 'px';
+      knobs[i].style.top = (r + dy) + 'px';
+      knobs[i].style.transform = 'translate(-50%,-50%)';
+      updateMotorUI();
+    }
+
+    function joyEnd(e, idx) {
+      const i = idx - 1;
+      joyActive[i] = false;
+      joyX[i] = 0; joyY[i] = 0;
+      knobs[i].style.left = '50%'; knobs[i].style.top = '50%';
+      knobs[i].style.transform = 'translate(-50%,-50%)';
+      // When joy3 released, also reset joy1 and joy2 knobs to center
+      if (i === 2) {
+        [0, 1].forEach(j => {
+          knobs[j].style.left = '50%';
+          knobs[j].style.top = '50%';
+          knobs[j].style.transform = 'translate(-50%,-50%)';
+        });
+      }
+      if (!joyActive[0] && !joyActive[1] && !joyActive[2]) { clearInterval(sendInterval); sendInterval = null; }
+      updateMotorUI();
+      sendMotorPackets();
+    }
+
+    const dirName = { 0: 'Free', 1: 'Forward', 2: 'Reverse', 3: 'Brake' };
+    const THRESH = 0.08;
+    // Dead-zone on joy3 X-axis so straight driving gives perfectly equal M1/M2
+    const TURN_DEADZONE = 0.12;
+
+    function getMotorValue(motorIdx) {
+      if (joyActive[2]) {
+        const ny = -joyY[2];
+        const nxRaw = joyX[2];
+        const nx = Math.abs(nxRaw) < TURN_DEADZONE ? 0 : nxRaw;
+        const raw = motorIdx === 0 ? (ny + nx) : (ny - nx);
+        const clamped = Math.max(-1, Math.min(1, raw));
+        const speed = Math.round(Math.abs(clamped) * 100);
+        const dir = clamped > THRESH ? 1 : clamped < -THRESH ? 2 : speed < 3 ? 0 : 3;
+        return { speed, dir };
+      }
+      const ny = -joyY[motorIdx];
+      const speed = Math.round(Math.min(1, Math.abs(ny)) * 100);
+      const dir = ny > THRESH ? 1 : ny < -THRESH ? 2 : speed < 3 ? 0 : 3;
+      return { speed, dir };
+    }
+
+    function updateMotorUI() {
+      const m1 = getMotorValue(0), m2 = getMotorValue(1);
+      document.getElementById('m1-speed').textContent = m1.speed + '%';
+      document.getElementById('m1-dir').textContent = dirName[m1.dir];
+      document.getElementById('m2-speed').textContent = m2.speed + '%';
+      document.getElementById('m2-dir').textContent = dirName[m2.dir];
+
+      if (joyActive[2]) {
+        const ny = -joyY[2];
+        const nxRaw = joyX[2];
+        const nx = Math.abs(nxRaw) < TURN_DEADZONE ? 0 : nxRaw;
+        // Mirror joy3 onto joy1 and joy2 knobs
+        [0, 1].forEach(i => {
+          const el = joys[i];
+          const rect = el.getBoundingClientRect();
+          const r = rect.width / 2;
+          const maxR = r - rect.width * 0.185;
+          const val = Math.max(-1, Math.min(1, i === 0 ? (ny + nx) : (ny - nx)));
+          knobs[i].style.left = r + 'px';
+          knobs[i].style.top = (r + (-val * maxR)) + 'px';
+          knobs[i].style.transform = 'translate(-50%,-50%)';
+        });
+        document.getElementById('j3-mode').textContent = Math.abs(ny) > THRESH ? (ny > 0 ? 'Forward' : 'Reverse') : 'Idle';
+        document.getElementById('j3-info').textContent = Math.abs(nxRaw) > THRESH ? (nxRaw > 0 ? `→ ${Math.round(Math.abs(nxRaw) * 100)}%` : `← ${Math.round(Math.abs(nxRaw) * 100)}%`) : 'Straight';
+      } else {
+        // joy3 not active — don't touch joy1/joy2 knobs, they manage themselves
+        document.getElementById('j3-mode').textContent = '—';
+        document.getElementById('j3-info').textContent = '—';
+      }
+    }
+
+    // Track last sent motor state to avoid redundant packets
+    const lastSent = [{ dir: -1, speed: -1 }, { dir: -1, speed: -1 }];
+
+    function sendMotorPackets() {
+      if (!ws || ws.readyState !== 1) return;
+      const m1 = getMotorValue(0), m2 = getMotorValue(1);
+      // CMD=62, each motor sent as separate 5-byte packet, only if changed
+      if (m1.dir !== lastSent[0].dir || m1.speed !== lastSent[0].speed) {
+        ws.send(new Uint8Array([pktId & 0xFF, 62, 0x01, m1.dir, m1.speed]).buffer);
+        lastSent[0].dir = m1.dir; lastSent[0].speed = m1.speed;
+      }
+      if (m2.dir !== lastSent[1].dir || m2.speed !== lastSent[1].speed) {
+        ws.send(new Uint8Array([pktId & 0xFF, 62, 0x02, m2.dir, m2.speed]).buffer);
+        lastSent[1].dir = m2.dir; lastSent[1].speed = m2.speed;
+      }
+    }
+
+    function togglePower() {
+      if (!isConnected()) { addLog('Not connected', 'err'); return; }
+      powered = !powered;
+      document.getElementById('pwr-dot').className = 'dot' + (powered ? ' on' : '');
+      document.getElementById('pwr-label').textContent = powered ? 'On' : 'Off';
+      document.getElementById('pwr-btn').className = powered ? 'active' : '';
+      document.getElementById('pwr-btn-label').textContent = powered ? 'Turn off' : 'Turn on';
+      if (ws && ws.readyState === 1) {
+        // CMD=61: Driver Power
+        const buf = new Uint8Array([pktId & 0xFF, 61, powered ? 0x01 : 0x00]);
+        ws.send(buf.buffer);
+        addLog('TX power ' + (powered ? 'ON' : 'OFF'), 'tx');
+      }
+    }
+
+    function rebootSystem(mode) {
+      if (!isConnected()) { addLog('Not connected', 'err'); return; }
+      // mode: 0=Normal, 1=BOOTSEL
+      const modeName = mode === 0x00 ? 'Normal' : 'BOOTSEL';
+      if (!confirm(`Reboot system to ${modeName} mode?`)) return;
+      // CMD=1: System reboot
+      const buf = new Uint8Array([pktId & 0xFF, 1, mode]);
+      ws.send(buf.buffer);
+      addLog(`TX reboot mode=${modeName} (${mode})`, 'tx');
+      pktId++;
+    }
+
+    function toggleWS() {
+      if (ws && ws.readyState === 1) { ws.close(); return; }
+      connectWS();
+    }
+
+    function connectWS() {
+      const url = document.getElementById('ws-url').value.trim();
+      const token = document.getElementById('ws-token').value.trim();
+      if (ws) { ws.close(); ws = null; }
+      try {
+        ws = new WebSocket(url);
+        ws.binaryType = 'arraybuffer';
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ token }));
+          document.getElementById('ws-dot').className = 'dot on';
+          document.getElementById('ws-label').textContent = 'Connected';
+          document.getElementById('ws-btn').textContent = '✕ Disconnect';
+          document.getElementById('ws-btn').className = 'active';
+          setControlsEnabled(true);
+          addLog('Connected — token sent', 'info');
+          addLog('Connected — token sent', 'info');
+        };
+        ws.onclose = () => {
+          document.getElementById('ws-dot').className = 'dot';
+          document.getElementById('ws-label').textContent = 'Disconnected';
+          document.getElementById('ws-btn').textContent = '⚡ Connect';
+          document.getElementById('ws-btn').className = '';
+          setControlsEnabled(false);
+          lastSent[0].dir = -1; lastSent[0].speed = -1;
+          lastSent[1].dir = -1; lastSent[1].speed = -1;
+          adcDmaActive = false;
+          resetAdcChannels();
+          document.getElementById('adc-dot').className = 'dot';
+          document.getElementById('adc-label').textContent = 'ADC DMA Stopped';
+          document.getElementById('adc-btn').textContent = '▶ Start';
+          document.getElementById('adc-btn').className = '';
+          addLog('Disconnected', 'err');
+        };
+        ws.onmessage = (e) => {
+          try {
+            const txt = typeof e.data === 'string' ? e.data : new TextDecoder().decode(e.data);
+            const msg = JSON.parse(txt);
+            applyState(msg);
+            addLog('RX ' + txt, 'rx');
+          } catch { addLog('RX raw', 'rx'); }
+        };
+        ws.onerror = () => addLog('WS error', 'err');
+      } catch (err) { addLog('Error: ' + err.message, 'err'); }
+    }
+
+    function applyStateLed(led) {
+      const mode = led.status;
+      ledMode = mode;
+      ['led-off', 'led-on', 'led-blink'].forEach(id => document.getElementById(id).className = 'led-btn');
+      const activeId = mode === 0x00 ? 'led-off' : mode === 0x01 ? 'led-on' : 'led-blink';
+      document.getElementById(activeId).className = 'led-btn active';
+      document.getElementById('led-indicator').className = 'led-indicator' + (mode === 0x01 || mode === 0x02 ? ' on' : '');
+    }
+
+    function applyStateTB6612FNG(tb) {
+      powered = tb.power === true;
+      document.getElementById('pwr-dot').className = 'dot' + (powered ? ' on' : '');
+      document.getElementById('pwr-label').textContent = powered ? 'On' : 'Off';
+      document.getElementById('pwr-btn').className = powered ? 'active' : '';
+      document.getElementById('pwr-btn-label').textContent = powered ? 'Turn off' : 'Turn on';
+      const motor = tb.motor;
+      if (motor) {
+        const m0 = motor['1'], m1 = motor['2'];
+        if (m0) { document.getElementById('m1-speed').textContent = m0.speed + '%'; document.getElementById('m1-dir').textContent = dirName[m0.direction] || m0.direction; }
+        if (m1) { document.getElementById('m2-speed').textContent = m1.speed + '%'; document.getElementById('m2-dir').textContent = dirName[m1.direction] || m1.direction; }
+      }
+    }
+
+    let adcDmaActive = false;
+
+    function resetAdcChannels() {
+      [0, 1, 2, 4].forEach(i => {
+        document.getElementById(`adc-ch${i}`).textContent = '—';
+      });
+      document.getElementById('adc-ch4-temp').textContent = '';
+    }
+
+    function setAdcDmaUI(active) {
+      adcDmaActive = active;
+      document.getElementById('adc-dot').className = 'dot' + (active ? ' on' : '');
+      document.getElementById('adc-label').textContent = active ? 'ADC DMA Running' : 'ADC DMA Stopped';
+      document.getElementById('adc-btn').textContent = active ? '■ Stop' : '▶ Start';
+      document.getElementById('adc-btn').className = active ? 'active' : '';
+      if (!active) resetAdcChannels();
+    }
+
+    function toggleADC() {
+      if (!isConnected()) { addLog('Not connected', 'err'); return; }
+      const next = !adcDmaActive;
+      ws.send(new Uint8Array([pktId & 0xFF, 41, next ? 1 : 0]).buffer);
+      addLog(`TX ADC DMA ${next ? 'START' : 'STOP'}`, 'tx');
+      pktId++;
+      // If stopping: immediately block incoming data and reset display
+      // UI label (Running/Stopped) will update when server confirms via event 41
+      if (!next) {
+        adcDmaActive = false;
+        resetAdcChannels();
+      }
+    }
+
+    function applyStateADC(data) {
+      if (!adcDmaActive) return;
+      const ch = data.input;
+      if (ch === 4) {
+        document.getElementById('adc-ch4').textContent = data.voltage.toFixed(3) + 'V';
+        document.getElementById('adc-ch4-temp').textContent = data.temp !== undefined ? data.temp.toFixed(1) + '°C' : '';
+      } else if (ch >= 0 && ch <= 3) {
+        document.getElementById(`adc-ch${ch}`).textContent = data.voltage.toFixed(3) + 'V';
+      }
+    }
+
+    function applyState(msg) {
+      switch (msg.event) {
+        case 0: // INIT
+          applyStateLed(msg.data.led);
+          applyStateTB6612FNG(msg.data.tb_6612_fng);
+          if (msg.data.adc_dma !== undefined) {
+            setAdcDmaUI(msg.data.adc_dma.state === true);
+          }
+          if (msg.data.adc) {
+            Object.values(msg.data.adc).forEach(ch => applyStateADC(ch));
+          }
+          break;
+        case 21: // LED_DEFAULT
+          applyStateLed(msg.data);
+          break;
+        case 41: // ADC DMA response
+          setAdcDmaUI(msg.data.state === true);
+          break;
+        case 42: // ADC Read
+          applyStateADC(msg.data);
+          break;
+        case 61: // TB6612FNG
+          applyStateTB6612FNG(msg.data);
+          break;
+      }
+    }
+
+    let ledMode = 0;
+    function updateBlinkVal() { document.getElementById('blink-val').textContent = document.getElementById('blink-delay').value; }
+
+    function setLED(mode) {
+      if (!isConnected()) { addLog('Not connected', 'err'); return; }
+      ledMode = mode;
+      const delay = mode === 0x02 ? parseInt(document.getElementById('blink-delay').value) : 0;
+      ['led-off', 'led-on', 'led-blink'].forEach(id => document.getElementById(id).className = 'led-btn');
+      const activeId = mode === 0x00 ? 'led-off' : mode === 0x01 ? 'led-on' : 'led-blink';
+      document.getElementById(activeId).className = 'led-btn active';
+      document.getElementById('led-indicator').className = 'led-indicator' + (mode === 0x01 || mode === 0x02 ? ' on' : '');
+      if (!ws || ws.readyState !== 1) { addLog('WS not connected', 'err'); return; }
+      // CMD=21: LED control
+      const buf = new Uint8Array([pktId & 0xFF, 21, mode, delay]);
+      ws.send(buf.buffer);
+      const modeName = mode === 0x00 ? 'OFF' : mode === 0x01 ? 'ON' : `BLINK delay=${delay}`;
+      addLog(`TX LED ${modeName}`, 'tx');
+      pktId++;
+    }
+
+    function isLogAtBottom() {
+      const log = document.getElementById('log');
+      return log.scrollHeight - log.scrollTop - log.clientHeight < 4;
+    }
+
+    function onLogScroll() {
+      const atBottom = isLogAtBottom();
+      document.getElementById('log-scroll-btn').style.display = atBottom ? 'none' : 'block';
+    }
+
+    function scrollLogToBottom() {
+      const log = document.getElementById('log');
+      log.scrollTop = log.scrollHeight;
+      document.getElementById('log-scroll-btn').style.display = 'none';
+    }
+
+    function clearLog() {
+      const log = document.getElementById('log');
+      log.innerHTML = '';
+      document.getElementById('log-scroll-btn').style.display = 'none';
+    }
+
+    function addLog(msg, type = 'info') {
+      const log = document.getElementById('log');
+      const wasAtBottom = isLogAtBottom();
+      const el = document.createElement('div');
+      const t = new Date().toLocaleTimeString('en', { hour12: false });
+      el.innerHTML = `<span class="ts">[${t}]</span> <span class="${type}">${msg}</span>`;
+      log.appendChild(el);
+      if (log.children.length > 200) log.removeChild(log.firstChild);
+      if (wasAtBottom) {
+        log.scrollTop = log.scrollHeight;
+        document.getElementById('log-scroll-btn').style.display = 'none';
+      } else {
+        document.getElementById('log-scroll-btn').style.display = 'block';
+      }
+    }
+
+    setControlsEnabled(false);
+
+    const THEME_KEY = 'pico-theme';
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('theme-btn').textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    }
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(THEME_KEY, next); applyTheme(next);
+    }
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved) { applyTheme(saved); }
+    else {
+      const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      applyTheme(dark ? 'dark' : 'light');
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => { if (!localStorage.getItem(THEME_KEY)) applyTheme(e.matches ? 'dark' : 'light'); });
+    }
+  </script>
+</body>
+
+</html>

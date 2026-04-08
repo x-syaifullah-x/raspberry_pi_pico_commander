@@ -1,0 +1,19 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/commander_firmware",
+    "cmake.buildDirectory": "${workspaceFolder}/commander_firmware/build",
+    "go.testFlags": [
+        "-count=1"
+    ],
+    "go.useLanguageServer": true,
+    "gopls": {
+        "ui.semanticTokens": true
+    },
+    "files.associations": {
+        "system_error": "c",
+        "*.inc": "c",
+        "atomic": "c",
+        "watchdog.h": "c",
+        "dispatcher.h": "c",
+        "led_default.h": "c"
+    },
+}

@@ -1,0 +1,9 @@
+go 1.26.2
+
+use (
+	./commander
+	./commander_cdc
+	./commander_hid
+	./commander_vendor
+	./commander_test
+)

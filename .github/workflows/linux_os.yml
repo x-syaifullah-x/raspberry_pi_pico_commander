@@ -1,0 +1,163 @@
+name: LINUX_OS
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:13
+    strategy:
+      matrix:
+        arch:
+          - x86_64
+          - aarch64
+    env:
+      DEBIAN_FRONTEND : noninteractive
+    steps:
+      - name: Update OS
+        run: |
+          apt-get update 2>&1 >/dev/null
+      - name: Install GIT
+        run: |
+          apt install --no-install-suggests --no-install-recommends -y git openssh-client ca-certificates
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          submodules: recursive
+          fetch-depth: 1
+      - name: Build Firmware
+        if: matrix.arch == 'x86_64'
+        run: |
+          apt-get install --no-install-suggests --no-install-recommends -y make
+          make -f commander_firmware/Makefile dependencies
+          make -f commander_firmware/Makefile configure
+          make -f commander_firmware/Makefile build
+      - name: Upload Firmware
+        if: matrix.arch == 'x86_64'
+        uses: actions/upload-artifact@v7
+        with:
+          name: firmware.uf2
+          path: commander_firmware/build/firmware.uf2
+      - name: Build Commander Vendor
+        run: |
+          apt install --no-install-suggests --no-install-recommends -y make golang
+          make -f commander_vendor/Makefile dependencies
+          make -f commander_vendor/Makefile build_static LIBUSB_ARCH=${{ matrix.arch }}
+      - name: Upload Commander Vendor
+        uses: actions/upload-artifact@v7
+        with:
+          name: commander-vendor-linux-${{ matrix.arch }}
+          path: commander_vendor/build/commander-vendor-linux-${{ matrix.arch }}
+
+  #         _ARCH_HOST=$(dpkg --print-architecture)
+  #         DOCKER_PLATFORM="linux/${_ARCH_HOST}"
+  #         DOCKER_IMAGE="debian:trixie"
+  #         docker pull --platform $DOCKER_PLATFORM $DOCKER_IMAGE
+  #         _CONTAINER_NAME="x-container-${CODENAME}"
+  #         github_workspace=/github_workspace
+  #         docker create --name "$_CONTAINER_NAME" --privileged -e "DEBIAN_FRONTEND=noninteractive" -v "${{ github.workspace }}:$github_workspace" --entrypoint "tail" --platform "$DOCKER_PLATFORM" "$DOCKER_IMAGE" -f /dev/null
+  #         docker start $_CONTAINER_NAME
+  #         docker exec $_CONTAINER_NAME apt-get update 2>&1 >/dev/null
+  #         docker exec $_CONTAINER_NAME apt-get upgrade --no-install-suggests --no-install-recommends -y 2>&1 >/dev/null
+  #         docker exec $_CONTAINER_NAME apt-get install make --no-install-suggests --no-install-recommends -y 2>&1 >/dev/null
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_firmware/Makefile dependencies
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_firmware/Makefile configure
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_firmware/Makefile build
+
+  # build:
+  #   needs: build_firmware
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       arch:
+  #         - amd64
+  #         - arm64
+  #   env:
+  #     DEBIAN_FRONTEND : noninteractive
+  #     ARCH            : ${{ matrix.arch }}
+  #     DOCKER_IMAGE    : debian:trixie
+  #     DOCKER_PLATFORM : linux/${{ matrix.arch }}
+
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v6
+  #     - name: Update OS
+  #       run: |
+  #         sudo apt-get update 2>&1 >/dev/null
+  #     - name: Update submodule
+  #       run: |
+  #         git submodule update --init --recursive --remote --force --depth 1
+
+  #     - name: Build
+  #       run: |
+  #         _ARCH_HOST=$(dpkg --print-architecture)
+  #         if [ "$_ARCH_HOST" != "$ARCH" ]; then
+  #           sudo apt install --no-install-suggests --no-install-recommends qemu-user-static -y 2>&1 >/dev/null
+  #           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+  #         fi
+  #         docker pull --platform $DOCKER_PLATFORM $DOCKER_IMAGE
+  #         _CONTAINER_NAME="x-container-${CODENAME}-${ARCH}"
+  #         github_workspace=/github_workspace
+  #         docker create --name "$_CONTAINER_NAME" --privileged -e "DEBIAN_FRONTEND=noninteractive" -v "${{ github.workspace }}:$github_workspace" -w "$github_workspace" --entrypoint "tail" --platform "$DOCKER_PLATFORM" "$DOCKER_IMAGE" -f /dev/null
+  #         docker start $_CONTAINER_NAME
+  #         docker exec $_CONTAINER_NAME apt-get update 2>&1 >/dev/null
+  #         docker exec $_CONTAINER_NAME apt-get upgrade --no-install-suggests --no-install-recommends -y 2>&1 >/dev/null
+  #         docker exec $_CONTAINER_NAME apt-get install make golang --no-install-suggests --no-install-recommends -y 2>&1 >/dev/null
+
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_vendor/Makefile dependencies
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_vendor/Makefile build_static
+
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_cdc/Makefile dependencies
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_cdc/Makefile build_static
+
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_hid/Makefile dependencies
+  #         docker exec $_CONTAINER_NAME make -f $github_workspace/commander_hid/Makefile build_static
+  #     - uses: actions/upload-artifact@v7
+  #       with:
+  #         name: commander-vendor-linux-${{ matrix.arch }}
+  #         path: commander_vendor/build/commander-vendor-linux-${{ matrix.arch }}
+  #     - uses: actions/upload-artifact@v7
+  #       with:
+  #         name: commander-cdc-linux-${{ matrix.arch }}
+  #         path: commander_cdc/build/commander-cdc-linux-${{ matrix.arch }}
+  #     - uses: actions/upload-artifact@v7
+  #       with:
+  #         name: commander-hid-linux-${{ matrix.arch }}
+  #         path: commander_hid/build/commander-hid-linux-${{ matrix.arch }}
+
+  # upload_artifact:
+  #     needs: build
+  #     runs-on: ubuntu-latest
+  #     permissions: write-all
+  #     env:
+  #       DEBIAN_FRONTEND : noninteractive
+  #       GITHUB_TOKEN    : ${{ secrets.GITHUB_TOKEN }}
+  #     steps:
+  #       - name: Checkout
+  #         uses: actions/checkout@v6
+  #       - name: A
+  #         uses: actions/download-artifact@v7
+  #         with:
+  #           name: firmware.uf2
+  #       - name: B
+  #         uses: actions/download-artifact@v7
+  #         with:
+  #           name: commander-vendor-linux-amd64
+  #       - name: C
+  #         uses: actions/download-artifact@v7
+  #         with:
+  #           name: commander-vendor-linux-arm64
+
+  #       - name: Upload binary
+  #         run: |
+  #           VERSION_NAME="v1.0"
+  #           gh release create "${VERSION_NAME}" --title "$VERSION_NAME" --latest=true --generate-notes || true
+  #           gh release upload "${VERSION_NAME}" \
+  #           firmware.uf2 \
+  #           commander-vendor-linux-amd64 \
+  #           commander-vendor-linux-arm64 \
+  #           --clobber
