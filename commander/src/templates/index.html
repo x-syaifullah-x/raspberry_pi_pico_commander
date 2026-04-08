@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Pico Control</title>
+  <style>
+    /* ── TOKENS ─────────────────────────────── */
+    :root {
+      --bg: #f5f5f0;
+      --card: #fff;
+      --inner: #f8f8f5;
+      --joy: #f0efe8;
+      --border: #ddd;
+      --border2: #eee;
+      --text: #1a1a1a;
+      --muted: #888;
+      --sub: #666;
+      --btn: #fff;
+      --btn-h: #f5f5f0;
+      --in: #fafafa;
+      --in-f: #fff;
+      --act-bg: #eaf3de;
+      --act-b: #52a84a;
+      --act-c: #2d6e25;
+      --led-bg: #fef9e0;
+      --led-b: #c9a800;
+      --led-c: #7a6000;
+      --badge: #e8f0fb;
+      --badge-c: #2d5fa8;
+      --log: #1a1a1a;
+      --log-ts: #555;
+      --err-bg: #fdf0ee;
+      --err-b: #c0392b;
+      --err-c: #c0392b;
+      --err-h: #fad7d2;
+    }
+
+    @media(prefers-color-scheme:dark) {
+      :root {
+        --bg: #111110;
+        --card: #1c1c1a;
+        --inner: #252522;
+        --joy: #252522;
+        --border: #333;
+        --border2: #2e2e2b;
+        --text: #e8e8e4;
+        --muted: #666;
+        --sub: #888;
+        --btn: #1c1c1a;
+        --btn-h: #252522;
+        --in: #252522;
+        --in-f: #2e2e2b;
+        --act-bg: #1a2e14;
+        --act-c: #7ec87e;
+        --led-bg: #2e2600;
+        --led-b: #c9a800;
+        --led-c: #f5c400;
+        --badge: #1a2340;
+        --badge-c: #7eb8e8;
+        --log: #0d0d0c;
+        --log-ts: #444;
+        --err-bg: #2e1414;
+        --err-c: #e87e7e;
+        --err-h: #3e1a1a;
+      }
+    }
+
+    [data-theme=light] {
+      --bg: #f5f5f0;
+      --card: #fff;
+      --inner: #f8f8f5;
+      --joy: #f0efe8;
+      --border: #ddd;
+      --border2: #eee;
+      --text: #1a1a1a;
+      --muted: #888;
+      --sub: #666;
+      --btn: #fff;
+      --btn-h: #f5f5f0;
+      --in: #fafafa;
+      --in-f: #fff;
+      --act-bg: #eaf3de;
+      --act-b: #52a84a;
+      --act-c: #2d6e25;
+      --led-bg: #fef9e0;
+      --led-b: #c9a800;
+      --led-c: #7a6000;
+      --badge: #e8f0fb;
+      --badge-c: #2d5fa8;
+      --log: #1a1a1a;
+      --log-ts: #555;
+      --err-bg: #fdf0ee;
+      --err-b: #c0392b;
+      --err-c: #c0392b;
+      --err-h: #fad7d2;
+    }
+
+    [data-theme=dark] {
+      --bg: #111110;
+      --card: #1c1c1a;
+      --inner: #252522;
+      --joy: #252522;
+      --border: #333;
+      --border2: #2e2e2b;
+      --text: #e8e8e4;
+      --muted: #666;
+      --sub: #888;
+      --btn: #1c1c1a;
+      --btn-h: #252522;
+      --in: #252522;
+      --in-f: #2e2e2b;
+      --act-bg: #1a2e14;
+      --act-b: #52a84a;
+      --act-c: #7ec87e;
+      --led-bg: #2e2600;
+      --led-b: #c9a800;
+      --led-c: #f5c400;
+      --badge: #1a2340;
+      --badge-c: #7eb8e8;
+      --log: #0d0d0c;
+      --log-ts: #444;
+      --err-bg: #2e1414;
+      --err-b: #c0392b;
+      --err-c: #e87e7e;
+      --err-h: #3e1a1a;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1rem;
+      transition: background .2s, color .2s
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      gap: 8px
+    }
+
+    h1 {
+      font-size: 17px;
+      font-weight: 500;
+      white-space: nowrap
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: .75rem
+    }
+
+    @media(min-width:640px) {
+      .grid {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .c-ws {
+        grid-column: 1;
+        grid-row: 1/3
+      }
+
+      .c-sys {
+        grid-column: 2;
+        grid-row: 1
+      }
+
+      .c-pwr {
+        grid-column: 2;
+        grid-row: 2
+      }
+
+      .c-full {
+        grid-column: 1/-1
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border: .5px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.125rem
+    }
+
+    .card-title {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: .65rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: .65rem
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--border);
+      flex-shrink: 0;
+      transition: background .2s
+    }
+
+    .dot.on {
+      background: #52a84a
+    }
+
+    .status {
+      font-size: 13px;
+      color: var(--sub)
+    }
+
+    input[type=text] {
+      width: 100%;
+      padding: 7px 10px;
+      border: .5px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--in);
+      outline: none;
+      margin-bottom: 7px
+    }
+
+    input[type=text]:focus {
+      border-color: var(--act-b);
+      background: var(--in-f)
+    }
+
+    button {
+      width: 100%;
+      padding: 9px;
+      border: .5px solid var(--border);
+      border-radius: 8px;
+      background: var(--btn);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: background .15s
+    }
+
+    button:hover {
+      background: var(--btn-h)
+    }
+
+    button.active {
+      background: var(--act-bg);
+      border-color: var(--act-b);
+      color: var(--act-c)
+    }
+
+    button.danger {
+      background: var(--err-bg);
+      border-color: var(--err-b);
+      color: var(--err-c)
+    }
+
+    button.danger:hover {
+      background: var(--err-h)
+    }
+
+    .theme-btn {
+      width: auto;
+      padding: 6px 12px;
+      font-size: 13px
+    }
+
+    .btn-sm {
+      width: auto;
+      padding: 6px 14px;
+      font-size: 12px
+    }
+
+    .btn-xs {
+      padding: 3px 10px;
+      font-size: 11px;
+      width: auto;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted)
+    }
+
+    .btn-xs:hover {
+      background: var(--btn-h);
+      color: var(--text)
+    }
+
+    .g2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px
+    }
+
+    .gamepad {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-around;
+      gap: .5rem;
+      flex-wrap: wrap
+    }
+
+    .joy-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+      min-width: 100px
+    }
+
+    .joy-lbl {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: .4rem;
+      text-transform: uppercase;
+      letter-spacing: .04em
+    }
+
+    .joy {
+      position: relative;
+      border-radius: 50%;
+      background: var(--joy);
+      border: 1.5px solid var(--border);
+      touch-action: none;
+      cursor: grab;
+      user-select: none;
+      width: clamp(88px, 26vw, 120px);
+      height: clamp(88px, 26vw, 120px)
+    }
+
+    .joy:active {
+      cursor: grabbing
+    }
+
+    .joy-ring {
+      position: absolute;
+      width: 73%;
+      height: 73%;
+      border-radius: 50%;
+      border: 1px dashed var(--border2);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none
+    }
+
+    .joy-knob {
+      position: absolute;
+      width: 37%;
+      height: 37%;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1.5px solid var(--act-b);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .15)
+    }
+
+    .joy-dot {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--border);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none
+    }
+
+    .mcard {
+      background: var(--inner);
+      border-radius: 8px;
+      padding: .6rem .75rem;
+      border: .5px solid var(--border2);
+      width: 100%;
+      margin-top: .6rem
+    }
+
+    .mcard .lbl {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 3px
+    }
+
+    .mcard .spd {
+      font-size: 18px;
+      font-weight: 500
+    }
+
+    .mcard .dir {
+      display: inline-block;
+      margin-top: 3px;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--badge);
+      color: var(--badge-c)
+    }
+
+    .mcard .row2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px
+    }
+
+    .mgrid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px
+    }
+
+    .adc-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .65rem
+    }
+
+    .lg3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 7px;
+      margin-bottom: .65rem
+    }
+
+    .led-btn {
+      padding: 9px 6px;
+      font-size: 13px
+    }
+
+    .led-btn.active {
+      background: var(--led-bg);
+      border-color: var(--led-b);
+      color: var(--led-c)
+    }
+
+    .blink-row {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .blink-row label {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap
+    }
+
+    input[type=range] {
+      flex: 1;
+      accent-color: #52a84a
+    }
+
+    .blink-v {
+      font-size: 12px;
+      min-width: 28px;
+      text-align: right
+    }
+
+    .led-ind {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--border);
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle
+    }
+
+    .led-ind.on {
+      background: #f5c400;
+      box-shadow: 0 0 6px #f5c400
+    }
+
+    .log-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .6rem
+    }
+
+    .log-hdr .card-title {
+      margin-bottom: 0
+    }
+
+    .log-wrap {
+      position: relative
+    }
+
+    .log {
+      background: var(--log);
+      border-radius: 8px;
+      padding: .65rem .9rem;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      color: #aaa;
+      height: 130px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      white-space: pre;
+    }
+
+    .log .ts {
+      color: var(--log-ts)
+    }
+
+    .log .tx {
+      color: #7ec87e
+    }
+
+    .log .rx {
+      color: #7eb8e8
+    }
+
+    .log .info {
+      color: #e8c87e
+    }
+
+    .log .err {
+      color: #e87e7e
+    }
+
+    .log-jump {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 14px;
+      font-size: 11px;
+      width: auto;
+      border-radius: 20px;
+      background: rgba(82, 168, 74, .9);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      display: none;
+      white-space: nowrap
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="topbar">
+    <h1>Pico Control Panel</h1>
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+  </div>
+
+  <div class="grid">
+
+    <!-- WS -->
+    <div class="card c-ws">
+      <p class="card-title">WebSocket</p>
+      <div class="row">
+        <div class="dot" id="ws-dot"></div>
+        <span class="status" id="ws-lbl">Disconnected</span>
+      </div>
+      <input type="text" id="ws-url" value="ws://{{.Host}}/commander_vendor" placeholder="WebSocket URL" />
+      <input type="text" id="ws-tok" value="TOKEN_A" placeholder="Token" />
+      <button id="ws-btn" onclick="toggleWS()">⚡ Connect</button>
+    </div>
+
+    <!-- System -->
+    <div class="card c-sys">
+      <p class="card-title">System Control</p>
+      <div class="g2">
+        <button class="danger" style="font-size:12px;padding:9px 6px" onclick="reboot(0)">🔄 Reboot</button>
+        <button class="danger" style="font-size:12px;padding:9px 6px" onclick="reboot(1)">🔧 Bootsel</button>
+      </div>
+    </div>
+
+    <!-- Power -->
+    <div class="card c-pwr">
+      <p class="card-title">Driver Power</p>
+      <div class="row">
+        <div class="dot" id="pwr-dot"></div>
+        <span class="status" id="pwr-lbl">Off</span>
+      </div>
+      <button id="pwr-btn" onclick="togglePower()">⏻ <span id="pwr-span">Turn on</span></button>
+    </div>
+
+    <!-- Analog -->
+    <div class="card c-full">
+      <p class="card-title">Analog Control</p>
+      <div class="gamepad">
+        <div class="joy-col">
+          <div class="joy-lbl">Motor 1</div>
+          <div class="joy" id="joy1" onpointerdown="joyDn(event,0)" onpointermove="joyMv(event,0)"
+            onpointerup="joyUp(event,0)" onpointercancel="joyUp(event,0)">
+            <div class="joy-ring"></div>
+            <div class="joy-knob" id="knob0"></div>
+            <div class="joy-dot"></div>
+          </div>
+          <div class="mcard">
+            <div class="row2"><span class="lbl">Speed</span><span class="spd" id="m1-spd">0%</span></div>
+            <span class="dir" id="m1-dir">Free</span>
+          </div>
+        </div>
+        <div class="joy-col">
+          <div class="joy-lbl">Both</div>
+          <div class="joy" id="joy2" onpointerdown="joyDn(event,2)" onpointermove="joyMv(event,2)"
+            onpointerup="joyUp(event,2)" onpointercancel="joyUp(event,2)">
+            <div class="joy-ring"></div>
+            <div class="joy-knob" id="knob2" style="border-color:#c9a800"></div>
+            <div class="joy-dot"></div>
+          </div>
+          <div class="mcard">
+            <div class="row2"><span class="lbl">Mode</span><span class="spd" style="font-size:13px"
+                id="j2-mode">—</span></div>
+            <span class="dir" id="j2-info">—</span>
+          </div>
+        </div>
+        <div class="joy-col">
+          <div class="joy-lbl">Motor 2</div>
+          <div class="joy" id="joy3" onpointerdown="joyDn(event,1)" onpointermove="joyMv(event,1)"
+            onpointerup="joyUp(event,1)" onpointercancel="joyUp(event,1)">
+            <div class="joy-ring"></div>
+            <div class="joy-knob" id="knob1"></div>
+            <div class="joy-dot"></div>
+          </div>
+          <div class="mcard">
+            <div class="row2"><span class="lbl">Speed</span><span class="spd" id="m2-spd">0%</span></div>
+            <span class="dir" id="m2-dir">Free</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADC -->
+    <div class="card c-full">
+      <div class="adc-hdr">
+        <p class="card-title" style="margin:0">ADC</p>
+        <div class="row" style="margin:0;gap:10px">
+          <div class="dot" id="adc-dot"></div>
+          <span class="status" id="adc-lbl">ADC DMA Stopped</span>
+          <button class="btn-sm" id="adc-btn" onclick="toggleADC()">▶ Start</button>
+        </div>
+      </div>
+      <div class="mgrid">
+        <div class="mcard">
+          <div class="lbl">CH0 · GPIO26</div>
+          <div class="spd"><span id="adc-0">—</span></div>
+        </div>
+        <div class="mcard">
+          <div class="lbl">CH1 · GPIO27</div>
+          <div class="spd"><span id="adc-1">—</span></div>
+        </div>
+        <div class="mcard">
+          <div class="lbl">CH2 · GPIO28</div>
+          <div class="spd"><span id="adc-2">—</span></div>
+        </div>
+        <div class="mcard">
+          <div class="lbl">CH4 · Temp</div>
+          <div class="spd"><span id="adc-4">—</span></div><span class="dir" id="adc-4t"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- LED -->
+    <div class="card c-full">
+      <p class="card-title"><span class="led-ind" id="led-ind"></span>Default LED</p>
+      <div class="lg3">
+        <button class="led-btn" id="led-0" onclick="setLED(0)">OFF</button>
+        <button class="led-btn" id="led-1" onclick="setLED(1)">ON</button>
+        <button class="led-btn" id="led-2" onclick="setLED(2)">Blink</button>
+      </div>
+      <div class="blink-row">
+        <label>Blink delay</label>
+        <input type="range" id="blink" min="1" max="255" value="10"
+          oninput="$('blink-v').textContent=this.value; if(ledMode===2) setLED(2);" />
+        <span class="blink-v" id="blink-v">10</span>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="card c-full">
+      <div class="log-hdr">
+        <p class="card-title" style="margin:0">Packet log</p>
+        <button class="btn-xs" onclick="clearLog()">Clear</button>
+      </div>
+      <div class="log-wrap">
+        <div class="log" id="log" onscroll="onScroll()"></div>
+        <button class="log-jump" id="log-jump" onclick="jumpLog()">↓ Latest</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    'use strict';
+
+    // ── UTILS ─────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const cls = (id, c) => $(id).className = c;
+
+    // ── STATE ─────────────────────────────────
+    let ws = null, powered = false, sendIv = null;
+    let clientId = 1;
+
+    const jX = [0, 0, 0], jY = [0, 0, 0], jOn = [false, false, false];
+    const TDEAD = 0.12, THRESH = 0.08;
+    const last = [{ dir: -1, spd: -1 }, { dir: -1, spd: -1 }];
+    let adcOn = false, ledMode = 0;
+
+    // ── ADC STATE ─────────────────────────────
+    // Stores last received value per channel; null = never received
+    const adcState = { 0: null, 1: null, 2: null, 4: null };
+
+    const joyEls = [$('joy1'), $('joy3'), $('joy2')];
+    const knobEls = [$('knob0'), $('knob1'), $('knob2')];
+
+    // ── HELPERS ───────────────────────────────
+    const isWS = () => ws?.readyState === 1;
+
+    function setEnabled(en) {
+      ['pwr-btn', 'led-0', 'led-1', 'led-2', 'adc-btn'].forEach(id => $(id).disabled = !en);
+      joyEls.forEach(el => { el.style.opacity = en ? '1' : '0.4'; el.style.pointerEvents = en ? '' : 'none'; });
+    }
+
+    // ── BINARY HELPERS ────────────────────────
+    const rawToV = raw => (raw / 4095) * 3.3;
+    const vToTemp = v => 27 - (v - 0.706) / 0.001721;
+
+    function parseBinary(buf) {
+      const dv = new DataView(buf);
+      const status = dv.getUint8(0);
+      switch (status) {
+        case 255: // INITIAL
+          clientId = dv.getUint8(1);
+          log(`RX ${fmtBytes(dv, 0, 7)}`, 'rx');
+          const len = dv.byteLength;
+          for (let off = 7; off < len; off += 7) {
+            dispatchPacket(dv, off);
+          }
+          break;
+        case 0: // NORMAL
+          dispatchPacket(dv, 0);
+          break;
+        default: // ERROR
+          log(`RX ${fmtBytes(dv, 0, 7)}`, 'err');
+          break;
+      }
+    }
+
+    function fmtBytes(dv, off, len) {
+      const arr = [];
+      for (let i = 0; i < len && off + i < dv.byteLength; i++) {
+        arr.push('0x' + dv.getUint8(off + i).toString(16).toUpperCase().padStart(2, '0'));
+      }
+      return `[${arr.join(', ')}]`;
+    }
+
+    function dispatchPacket(dv, off) {
+      const cmd = dv.getUint8(off + 1);
+      const d0 = dv.getUint8(off + 2);
+      const d1 = dv.getUint8(off + 3);
+      const d2 = dv.getUint8(off + 4);
+      const d3 = dv.getUint8(off + 5);
+      const d4 = dv.getUint8(off + 6);
+      log(`RX ${fmtBytes(dv, off, 7)}`, 'rx');
+
+      switch (cmd) {
+        case 21: handleLED(d0, d1, d2); break;
+        case 41: handleADCDMA(d0); break;
+        case 42: handleADC(0, d0, d1); break;
+        case 43: handleADC(1, d0, d1); break;
+        case 44: handleADC(2, d0, d1); break;
+        case 45: handleADC(3, d0, d1); break;
+        case 46: handleADC(4, d0, d1); break;
+        case 61: handlePower(d0); break;
+        case 62: handleMotor(1, d0, d1); break;
+        case 63: handleMotor(2, d0, d1); break;
+        case 64: handleMotorStatus(d0, d1, d2, d3, d4); break;
+        default: log(`RX unknown cmd=${cmd}`, 'info');
+      }
+    }
+
+    // ── CMD HANDLERS ──────────────────────────
+
+    function handleLED(d0, d1, d2) {
+      ledMode = d0;
+      const raw = d1 | (d2 << 8);
+      const step = Math.round(raw / 100);
+      syncLedUI(d0);
+      if (d0 === 2) {
+        $('blink').value = step;
+        $('blink-v').textContent = step;
+      }
+    }
+
+    function handleADCDMA(state) {
+      syncAdcUI(state === 1);
+    }
+
+    // Always store value; only render if ADC is running
+    function handleADC(d0, d1, d2) {
+      const raw = d1 | (d2 << 8);
+      const v = rawToV(raw);
+      if (d0 === 4) {
+        adcState[4] = { v, t: vToTemp(v) };
+      } else if (d0 <= 2) {
+        adcState[d0] = { v };
+      }
+      if (adcOn) renderADC();
+    }
+
+    // Render display from adcState
+    function renderADC() {
+      [0, 1, 2].forEach(i => {
+        $('adc-' + i).textContent = adcState[i] != null
+          ? adcState[i].v.toFixed(3) + 'V'
+          : '—';
+      });
+      if (adcState[4] != null) {
+        $('adc-4').textContent = adcState[4].v.toFixed(3) + 'V';
+        $('adc-4t').textContent = adcState[4].t.toFixed(1) + '°C';
+      } else {
+        $('adc-4').textContent = '—';
+        $('adc-4t').textContent = '';
+      }
+    }
+
+    // Clear adcState and update display
+    function resetADC() {
+      [0, 1, 2, 4].forEach(i => adcState[i] = null);
+      renderADC();
+    }
+
+    function handlePower(power) {
+      powered = power === 1;
+      syncPwrUI();
+    }
+
+    function handleMotor(motorId, direction, speed) {
+      const DIR = { 0: 'Free', 1: 'Forward', 2: 'Reverse', 3: 'Brake' };
+      const id = 'm' + motorId;
+      $(id + '-spd').textContent = speed + '%';
+      $(id + '-dir').textContent = DIR[direction] ?? direction;
+      const i = motorId - 1;
+      if (i >= 0 && i < 2) { last[i].dir = direction; last[i].spd = speed; }
+    }
+
+    function handleMotorStatus(driverState, m1Dir, m1Spd, m2Dir, m2Spd) {
+      const DIR = { 0: 'Free', 1: 'Forward', 2: 'Reverse', 3: 'Brake' };
+      powered = driverState === 1;
+      syncPwrUI();
+      $('m1-spd').textContent = m1Spd + '%'; $('m1-dir').textContent = DIR[m1Dir] ?? m1Dir;
+      $('m2-spd').textContent = m2Spd + '%'; $('m2-dir').textContent = DIR[m2Dir] ?? m2Dir;
+      last[0].dir = m1Dir; last[0].spd = m1Spd;
+      last[1].dir = m2Dir; last[1].spd = m2Spd;
+    }
+
+    // ── JOYSTICK ──────────────────────────────
+    const DIR_LABEL = { 0: 'Free', 1: 'Forward', 2: 'Reverse', 3: 'Brake' };
+
+    function motorVal(mi) {
+      if (jOn[2]) {
+        const ny = -jY[2], nx = Math.abs(jX[2]) < TDEAD ? 0 : jX[2];
+        const raw = mi === 0 ? ny + nx : ny - nx;
+        const c = Math.max(-1, Math.min(1, raw));
+        const s = Math.round(Math.abs(c) * 100);
+        return { s, d: c > THRESH ? 1 : c < -THRESH ? 2 : s < 3 ? 0 : 3 };
+      }
+      const ny = -jY[mi];
+      const s = Math.round(Math.min(1, Math.abs(ny)) * 100);
+      return { s, d: ny > THRESH ? 1 : ny < -THRESH ? 2 : s < 3 ? 0 : 3 };
+    }
+
+    function updateMUI() {
+      const m0 = motorVal(0), m1 = motorVal(1);
+      $('m1-spd').textContent = m0.s + '%'; $('m1-dir').textContent = DIR_LABEL[m0.d];
+      $('m2-spd').textContent = m1.s + '%'; $('m2-dir').textContent = DIR_LABEL[m1.d];
+
+      if (jOn[2]) {
+        const ny = -jY[2], nxR = jX[2], nx = Math.abs(nxR) < TDEAD ? 0 : nxR;
+        [0, 1].forEach(i => {
+          const el = joyEls[i], r = el.getBoundingClientRect();
+          const rad = r.width / 2, mR = rad - r.width * 0.185;
+          const v = Math.max(-1, Math.min(1, i === 0 ? ny + nx : ny - nx));
+          knobEls[i].style.cssText = `left:${rad}px;top:${rad + (-v * mR)}px;transform:translate(-50%,-50%)`;
+        });
+        $('j2-mode').textContent = Math.abs(ny) > THRESH ? (ny > 0 ? 'Forward' : 'Reverse') : 'Idle';
+        $('j2-info').textContent = Math.abs(nxR) > THRESH ? (nxR > 0 ? `→ ${Math.round(Math.abs(nxR) * 100)}%` : `← ${Math.round(Math.abs(nxR) * 100)}%`) : 'Straight';
+      } else {
+        $('j2-mode').textContent = '—'; $('j2-info').textContent = '—';
+      }
+    }
+
+    function joyDn(e, i) {
+      if (!isWS()) { log('Not connected', 'err'); return; }
+      if (!powered) { log('Power is off', 'err'); return; }
+      joyEls[i].setPointerCapture(e.pointerId);
+      jOn[i] = true; joyMv(e, i);
+      if (!sendIv) sendIv = setInterval(sendMots, 80);
+    }
+
+    function joyMv(e, i) {
+      if (!jOn[i]) return;
+      const el = joyEls[i], r = el.getBoundingClientRect();
+      const rad = r.width / 2, kR = r.width * 0.185, mR = rad - kR;
+      const cx = r.left + rad, cy = r.top + rad;
+      let dx = e.clientX - cx, dy = e.clientY - cy;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d > mR) { dx *= mR / d; dy *= mR / d; }
+      jX[i] = dx / mR; jY[i] = dy / mR;
+      knobEls[i].style.cssText = `left:${rad + dx}px;top:${rad + dy}px;transform:translate(-50%,-50%)`;
+      updateMUI();
+    }
+
+    function joyUp(e, i) {
+      jOn[i] = false; jX[i] = 0; jY[i] = 0;
+      knobEls[i].style.cssText = 'left:50%;top:50%;transform:translate(-50%,-50%)';
+      if (i === 2) [0, 1].forEach(j => { knobEls[j].style.cssText = 'left:50%;top:50%;transform:translate(-50%,-50%)'; });
+      if (!jOn[0] && !jOn[1] && !jOn[2]) { clearInterval(sendIv); sendIv = null; }
+      updateMUI(); sendMots();
+    }
+
+    // ── TX HELPER ─────────────────────────────
+    const pkt = (...bytes) => {
+      const b = new Uint8Array(8);
+      bytes.forEach((v, i) => { b[i] = v; });
+      return b;
+    };
+
+    // ── MOTOR SEND ────────────────────────────
+    function sendMots() {
+      if (!isWS()) return;
+      const m0 = motorVal(0), m1 = motorVal(1);
+      const ch0 = m0.d !== last[0].dir || m0.s !== last[0].spd;
+      const ch1 = m1.d !== last[1].dir || m1.s !== last[1].spd;
+      if (!ch0 && !ch1) return;
+
+      if (ch0 && ch1) {
+        const buf = new Uint8Array(16);
+        buf.set(pkt(clientId, 62, m0.d, m0.s), 0);
+        buf.set(pkt(clientId, 63, m1.d, m1.s), 8);
+        ws.send(buf.buffer);
+        log(`TX motor1 dir=${DIR_LABEL[m0.d]} spd=${m0.s}% | motor2 dir=${DIR_LABEL[m1.d]} spd=${m1.s}%`, 'tx');
+      } else if (ch0) {
+        ws.send(pkt(clientId, 62, m0.d, m0.s).buffer);
+        log(`TX motor1 dir=${DIR_LABEL[m0.d]} spd=${m0.s}%`, 'tx');
+      } else {
+        ws.send(pkt(clientId, 63, m1.d, m1.s).buffer);
+        log(`TX motor2 dir=${DIR_LABEL[m1.d]} spd=${m1.s}%`, 'tx');
+      }
+
+      if (ch0) { last[0].dir = m0.d; last[0].spd = m0.s; }
+      if (ch1) { last[1].dir = m1.d; last[1].spd = m1.s; }
+    }
+
+    // ── POWER ─────────────────────────────────
+    function togglePower() {
+      if (!isWS()) { log('Not connected', 'err'); return; }
+      powered = !powered; syncPwrUI();
+      ws.send(pkt(clientId, 61, powered ? 1 : 0).buffer);
+      log(`TX power ${powered ? 'ON' : 'OFF'}`, 'tx');
+    }
+
+    function syncPwrUI() {
+      $('pwr-dot').className = 'dot' + (powered ? ' on' : '');
+      $('pwr-lbl').textContent = powered ? 'On' : 'Off';
+      $('pwr-btn').className = powered ? 'active' : '';
+      $('pwr-span').textContent = powered ? 'Turn off' : 'Turn on';
+    }
+
+    // ── REBOOT ────────────────────────────────
+    function reboot(mode) {
+      if (!isWS()) { log('Not connected', 'err'); return; }
+      if (!confirm(`Reboot ${mode ? 'to BOOTSEL' : 'normally'}?`)) return;
+      ws.send(pkt(clientId, 1, mode).buffer);
+      log(`TX reboot mode=${mode ? 'BOOTSEL' : 'Normal'}`, 'tx');
+    }
+
+    // ── ADC ───────────────────────────────────
+    function syncAdcUI(on) {
+      adcOn = on;
+      $('adc-dot').className = 'dot' + (on ? ' on' : '');
+      $('adc-lbl').textContent = on ? 'ADC DMA Running' : 'ADC DMA Stopped';
+      $('adc-btn').textContent = on ? '■ Stop' : '▶ Start';
+      $('adc-btn').className = on ? 'btn-sm active' : 'btn-sm';
+    }
+
+    function toggleADC() {
+      if (!isWS()) { log('Not connected', 'err'); return; }
+      const next = !adcOn;
+      adcOn = next; // optimistic
+      ws.send(pkt(clientId, 41, next ? 1 : 0).buffer);
+      log(`TX ADC DMA ${next ? 'START' : 'STOP'}`, 'tx');
+      syncAdcUI(next);
+    }
+
+    // ── LED ───────────────────────────────────
+    function setLED(mode) {
+      if (!isWS()) { log('Not connected', 'err'); return; }
+      ledMode = mode;
+      const delay = mode === 2 ? +$('blink').value : 0;
+      syncLedUI(mode);
+      ws.send(pkt(clientId, 21, mode, delay & 0xFF).buffer);
+      log(`TX LED ${['OFF', 'ON', `BLINK delay=${delay}ms`][mode]}`, 'tx');
+    }
+
+    function syncLedUI(mode) {
+      [0, 1, 2].forEach(i => cls('led-' + i, 'led-btn'));
+      cls('led-' + mode, 'led-btn active');
+      $('led-ind').className = 'led-ind' + (mode >= 1 ? ' on' : '');
+    }
+
+    // ── WEBSOCKET ─────────────────────────────
+    function toggleWS() { isWS() ? ws.close(1000, "normal closure") : connectWS(); }
+
+    function connectWS() {
+      const url = $('ws-url').value.trim(), tok = $('ws-tok').value.trim();
+      ws?.close(1000, "normal closure"); ws = null;
+      try {
+        ws = new WebSocket(url);
+        ws.binaryType = 'arraybuffer';
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ token: tok }));
+          $('ws-dot').className = 'dot on';
+          $('ws-lbl').textContent = 'Connected';
+          $('ws-btn').textContent = '✕ Disconnect';
+          $('ws-btn').className = 'active';
+          setEnabled(true);
+          log('Connected — token sent', 'info');
+        };
+
+        ws.onclose = e => {
+          $('ws-dot').className = 'dot';
+          $('ws-lbl').textContent = 'Disconnected';
+          $('ws-btn').textContent = '⚡ Connect';
+          $('ws-btn').className = '';
+          setEnabled(false);
+          last[0].dir = last[0].spd = last[1].dir = last[1].spd = -1;
+          clientId = 1;
+          if (sendIv) { clearInterval(sendIv); sendIv = null; }
+          adcOn = false;
+          resetADC(); // clear state + display only on disconnect
+          $('adc-dot').className = 'dot';
+          $('adc-lbl').textContent = 'ADC DMA Stopped';
+          $('adc-btn').textContent = '▶ Start';
+          $('adc-btn').className = 'btn-sm';
+          log(`Disconnected code=${e.code} reason="${e.reason}"`, 'err');
+        };
+
+        ws.onmessage = e => { parseBinary(e.data); };
+        ws.onerror = () => log('WS error', 'err');
+      } catch (e) { log('Error: ' + e.message, 'err'); }
+    }
+
+    // ── LOG ───────────────────────────────────
+    const logEl = $('log'), jumpEl = $('log-jump');
+    const atBottom = () => logEl.scrollHeight - logEl.scrollTop - logEl.clientHeight < 4;
+
+    function onScroll() { jumpEl.style.display = atBottom() ? 'none' : 'block'; }
+    function jumpLog() { logEl.scrollTop = logEl.scrollHeight; jumpEl.style.display = 'none'; }
+    function clearLog() { logEl.innerHTML = ''; jumpEl.style.display = 'none'; }
+
+    function log(msg, type = 'info') {
+      const bot = atBottom();
+      const el = document.createElement('div');
+      el.innerHTML = `<span class="ts">[${new Date().toLocaleTimeString('en', { hour12: false })}]</span> <span class="${type}">${msg}</span>`;
+      logEl.appendChild(el);
+      if (logEl.children.length > 200) logEl.removeChild(logEl.firstChild);
+      if (bot) { logEl.scrollTop = logEl.scrollHeight; jumpEl.style.display = 'none'; }
+      else { jumpEl.style.display = 'block'; }
+    }
+
+    // ── THEME ─────────────────────────────────
+    const TK = 'pico-theme';
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      $('theme-btn').textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+    }
+    function toggleTheme() {
+      const n = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      localStorage.setItem(TK, n); applyTheme(n);
+    }
+    const sv = localStorage.getItem(TK);
+    if (sv) { applyTheme(sv); }
+    else {
+      applyTheme(matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
+      matchMedia('(prefers-color-scheme:dark)').addEventListener('change', e => {
+        if (!localStorage.getItem(TK)) applyTheme(e.matches ? 'dark' : 'light');
+      });
+    }
+
+    // ── INIT ──────────────────────────────────
+    setEnabled(false);
+  </script>
+</body>
+
+</html>
